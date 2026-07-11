@@ -100,19 +100,28 @@ Screen.getSize();              // -> {width, height}
 sleep.sync(200);               // blocking pause (use between actions)
 ```
 
-**`Key` names (verified against the installed enum — the npm README is
-inaccurate for modifiers).** Modifiers are SIDE-SPECIFIC: use
-`LEFT_CONTROL`/`RIGHT_CONTROL`, `LEFT_SHIFT`, `LEFT_ALT`, `LEFT_SUPER`/`LEFT_META`
-— there is **no** bare `CONTROL`/`SHIFT`/`ALT` (referencing one yields
-`undefined` → "Pressing/releasing key is not yet supported: undefined").
-Other keys: `ENTER TAB ESCAPE BACKSPACE DELETE SPACE INSERT`, arrows
-`UP DOWN LEFT RIGHT`, `HOME END PAGE_UP PAGE_DOWN`, `F1`–`F24`, `PRINT_SCREEN
-PAUSE_BREAK CAPS_LOCK NUM_LOCK SCROLL_LOCK`, letters `A`–`Z`, numbers
-`ZERO`–`NINE`, `NUMPAD_0`–`NUMPAD_9` (+ `NUMPAD_ENTER/ADD/SUBTRACT/...`),
-symbols `SEMICOLON EQUAL COMMA MINUS PERIOD SLASH BACKTICK LEFT_BRACKET
-RIGHT_BRACKET BACKSLASH QUOTE`. `MouseButton`: `LEFT RIGHT MIDDLE MOUSE4 MOUSE5`.
-To dump the full list from a running container:
-`$DUID exec node -e 'console.log(Object.keys(require("/usr/local/lib/node_modules/suchibot").Key).join(" "))'`.
+**`Key` names** — the complete enum. Modifiers are side-specific (`LEFT_CONTROL`,
+not `CONTROL`); `ANY` is for `on*` listeners only.
+
+<!-- KEY-LIST-START — skill-tests/08 verifies every installed Key appears below -->
+```
+BACKSPACE DELETE ENTER TAB ESCAPE SPACE INSERT
+UP DOWN LEFT RIGHT HOME END PAGE_UP PAGE_DOWN
+F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12 F13 F14 F15 F16 F17 F18 F19 F20 F21 F22 F23 F24
+LEFT_CONTROL RIGHT_CONTROL LEFT_SHIFT RIGHT_SHIFT LEFT_ALT RIGHT_ALT
+LEFT_SUPER RIGHT_SUPER LEFT_WINDOWS RIGHT_WINDOWS LEFT_COMMAND RIGHT_COMMAND LEFT_META RIGHT_META
+CAPS_LOCK NUM_LOCK SCROLL_LOCK PRINT_SCREEN PAUSE_BREAK VOLUME_UP VOLUME_DOWN MUTE
+A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
+ZERO ONE TWO THREE FOUR FIVE SIX SEVEN EIGHT NINE
+NUMPAD_0 NUMPAD_1 NUMPAD_2 NUMPAD_3 NUMPAD_4 NUMPAD_5 NUMPAD_6 NUMPAD_7 NUMPAD_8 NUMPAD_9
+NUMPAD_ADD NUMPAD_SUBTRACT NUMPAD_MULTIPLY NUMPAD_DIVIDE NUMPAD_DECIMAL NUMPAD_ENTER
+SEMICOLON EQUAL COMMA MINUS PERIOD SLASH BACKTICK LEFT_BRACKET RIGHT_BRACKET BACKSLASH QUOTE
+ANY
+```
+<!-- KEY-LIST-END -->
+
+`MouseButton`: `LEFT RIGHT MIDDLE MOUSE4 MOUSE5 ANY`. Dump the enum from a running
+container: `$DUID exec node -e 'console.log(Object.keys(require("suchibot").Key).join(" "))'`.
 See `examples/example.suchibot.js`.
 
 ## Capturing the screen

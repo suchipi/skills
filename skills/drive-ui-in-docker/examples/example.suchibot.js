@@ -2,9 +2,7 @@
 //
 //   drive-ui-in-docker run examples/example.suchibot.js
 //
-// `run` executes this with `node` (suchibot as a library), so a pure-action
-// script exits on its own — no process.exit needed. Use `sleep.sync` (not
-// `sleep.async`) to pace actions between screenshots.
+// Use `sleep.sync` to pace actions between screenshots.
 const { Mouse, Keyboard, Key, MouseButton, sleep } = require("suchibot");
 
 // Move + click somewhere, then type.

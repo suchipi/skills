@@ -50,7 +50,7 @@ $DUID launch xterm          # launch the target app inside it (detached)
 $DUID shot                  # capture -> .tmp/drive-ui-in-docker/shot.png  (Read it to see the screen)
 $DUID run examples/example.suchibot.js   # drive it
 $DUID shot after.png        # confirm the result
-$DUID down                  # tear down when finished
+$DUID down                  # stop it (keeps the container + anything installed in it)
 ```
 
 To drive a real app, replace `launch xterm` with your app's launch command
@@ -76,12 +76,11 @@ from a stale screenshot are the most common failure).
 
 ## suchibot cheatsheet
 
-Scripts run with `require("suchibot")`. `run` executes them with `node` (suchibot
-as a **library**, not its CLI), so a pure-action script exits on its own once the
-actions finish — no `process.exit` needed. Use `sleep.sync` (not `sleep.async`)
-to pace actions. Only a script that registers `on*` event handlers needs
-`suchibot.startListening()`; call `suchibot.stopListening()` when done so it
-exits. Reference: https://github.com/suchipi/suchibot
+Scripts use suchibot's API via `require("suchibot")` and are run with `node`.
+Use `sleep.sync` (not `sleep.async`) to pace actions between steps. A script that
+registers `on*` event handlers must call `suchibot.startListening()` to receive
+them and `suchibot.stopListening()` when finished. Reference:
+https://github.com/suchipi/suchibot
 
 ```js
 const { Mouse, Keyboard, Key, MouseButton, Screen, sleep } = require("suchibot");
@@ -134,20 +133,26 @@ Read the resulting file from `.tmp/drive-ui-in-docker/` to analyze it.
 | `build` | Build `drive-ui-in-docker:latest` from this skill's Dockerfile |
 | `up [WxH]` | Start the VNC desktop (default 1280x800) |
 | `launch <cmd...>` | Launch a UI app inside the desktop (detached) |
-| `shot [name.png]` | Screenshot via ffmpeg → `$WORK/name` |
+| `shot [name.png]` | Screenshot via ffmpeg → `$DRIVE_UI_IN_DOCKER_WORK/name` |
 | `vncshot [name.jpg]` | Screenshot via vncsnapshot |
 | `record-start [name.mp4]` / `record-stop` | Screen recording |
 | `run <script.js>` | Run a suchibot script inside the container |
 | `exec <cmd...>` | Run any command inside (DISPLAY=:0) |
 | `shell` | Interactive shell inside the container |
 | `status` | Show container + work-dir state |
-| `down` | Stop and remove the container |
+| `down` | Stop the container, preserving it (fast resume with `up`) |
+| `destroy` | Remove the container entirely (cleanup when done with the skill) |
 
 Env overrides: `DRIVE_UI_IN_DOCKER_NAME` (container), `DRIVE_UI_IN_DOCKER_IMAGE`,
 `DRIVE_UI_IN_DOCKER_WORK` (host work dir).
 
 ## Notes & troubleshooting
 
+- **Lifecycle — prefer `down`, not `destroy`**: `down` *stops* the container but
+  keeps it, so anything installed at runtime (e.g. `exec apt-get install -y
+  chromium`) survives and `up` resumes it in seconds. Only `destroy` deletes the
+  container and that state — use it when you're done with the skill for a while,
+  not between routine uses.
 - **Coordinates** are in display pixels, origin top-left, matching your
   screenshots 1:1. Re-screenshot after any layout change.
 - **App won't appear**: some apps need env or a bigger `--shm-size` (Chromium/
@@ -160,7 +165,8 @@ Env overrides: `DRIVE_UI_IN_DOCKER_NAME` (container), `DRIVE_UI_IN_DOCKER_IMAGE`
   so prefer `run`.
 - **Watch live**: open http://localhost:8080/ in a browser to see (and even
   take over) the desktop while automating.
-- **Resolution**: set at `up` time; it's fixed for the container's life. Tear
-  down and `up` again to change it.
+- **Resolution**: `up WxH` sets it. To change it later, `down` then `up WxH` —
+  the container (and everything installed in it) is preserved and the new size is
+  applied live via `xrandr` on resume. Any WxH works, not just common presets.
 - **Persisting an app**: for a repeatable target, create a Dockerfile with
-  `FROM drive-ui-in-docker:latest`, install the app, and set `IMAGE` to your tag.
+  `FROM drive-ui-in-docker:latest`, install the app, and set `DRIVE_UI_IN_DOCKER_IMAGE` to your tag.

@@ -1,6 +1,7 @@
 # Extends suchipi/novnc (Xvnc + fluxbox + noVNC) with everything needed to
 # drive and observe the desktop: Node + suchibot for input, ffmpeg/vncsnapshot/
-# imagemagick for capture, x11-utils for geometry probing.
+# imagemagick for capture, x11-utils (geometry probe) + x11-xserver-utils
+# (xrandr, for live resolution changes).
 
 # Node.js is copied from the official image (glibc/Debian build, ABI-compatible
 # with the Ubuntu 24.04 base) rather than installed via nodesource.
@@ -20,7 +21,7 @@ RUN set -ex; \
     apt-get install -y --no-install-recommends \
       ca-certificates \
       build-essential python3 libxtst-dev \
-      ffmpeg vncsnapshot x11-utils imagemagick; \
+      ffmpeg vncsnapshot x11-utils x11-xserver-utils imagemagick; \
     npm install -g suchibot; \
     apt-get clean; \
     rm -rf /var/lib/apt/lists/*

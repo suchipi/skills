@@ -18,7 +18,8 @@
 #   drive-ui-in-docker shell                    Interactive shell inside the container
 #   drive-ui-in-docker vncshot [name.jpg]       Alternative capture via vncsnapshot over VNC (:5900)
 #   drive-ui-in-docker status                   Show container + work-dir state
-#   drive-ui-in-docker down                     Stop and remove the container
+#   drive-ui-in-docker down                     Stop the container (preserved; resume fast with 'up')
+#   drive-ui-in-docker destroy                  Remove the container entirely (cleanup when done)
 #
 # Env overrides: DRIVE_UI_IN_DOCKER_NAME (drive-ui-in-docker),
 #                DRIVE_UI_IN_DOCKER_IMAGE (drive-ui-in-docker:latest),
@@ -34,6 +35,7 @@ WORK_ABS="$(cd "$WORK" && pwd)"
 
 die() { echo "drive-ui-in-docker: $*" >&2; exit 1; }
 running() { [ -n "$(docker ps -q -f "name=^${NAME}$")" ]; }
+exists()  { [ -n "$(docker ps -aq -f "name=^${NAME}$")" ]; }
 require_up() { running || die "container '$NAME' is not running. Run: drive-ui-in-docker up"; }
 
 # Detect the live X display geometry (e.g. 1280x800) from inside the container.
@@ -44,22 +46,65 @@ disp_size() {
     | awk '/dimensions:/ && !seen {print $2; seen=1}'
 }
 
+# Block until the X server on :0 answers (used after 'docker start').
+wait_x() {
+  local i
+  for i in $(seq 1 30); do
+    docker exec "$NAME" xdpyinfo -display :0 >/dev/null 2>&1 && return 0
+    sleep 0.5
+  done
+  return 1
+}
+
+# Set the live display to WxH via RandR. Uses a preset mode when TigerVNC lists
+# one, otherwise synthesizes a modeline (Xvnc is virtual, so the timings are
+# cosmetic — only the WxH matters).
+apply_geometry() {
+  local geom="$1"
+  local w="${geom%x*}" h="${geom#*x}"
+  docker exec -e DISPLAY=:0 "$NAME" sh -c '
+    set -e
+    G="'"$geom"'"; W='"$w"'; H='"$h"'
+    OUT=$(xrandr -q | awk "/ connected/{print \$1; exit}")
+    if ! xrandr -q | grep -qw "$G"; then
+      CLK=$(( (W+24)*(H+8)*60/1000000 )); [ "$CLK" -lt 1 ] && CLK=1
+      xrandr --newmode "$G" ${CLK}.00 \
+        $W $((W+8)) $((W+16)) $((W+24)) $H $((H+2)) $((H+4)) $((H+8)) +hsync +vsync
+      xrandr --addmode "$OUT" "$G"
+    fi
+    xrandr --output "$OUT" --mode "$G"
+  '
+}
+
 cmd_build() {
   docker build -t "$IMAGE" "$SKILL_DIR"
 }
 
 cmd_up() {
-  running && die "container '$NAME' already running (use 'drive-ui-in-docker down' first)"
+  running && die "container '$NAME' already running (use 'down' to stop, 'destroy' to remove)"
+  # Reuse a stopped container so anything installed in it (apt packages, etc.)
+  # survives across sessions — only 'destroy' deletes that state.
+  if exists; then
+    docker start "$NAME" >/dev/null
+    if [ -n "${1:-}" ]; then
+      wait_x || die "resumed '$NAME' but the X server never came up"
+      apply_geometry "$1" || die "resumed '$NAME' but failed to set resolution $1"
+      echo "Resumed existing '$NAME' at $1 — installed apps & state preserved. View: http://localhost:8080/"
+    else
+      echo "Resumed existing '$NAME' — installed apps & state preserved. View: http://localhost:8080/"
+    fi
+    return
+  fi
   local geom="${1:-1280x800}"
   local w="${geom%x*}" h="${geom#*x}"
-  docker run -d --rm \
+  docker run -d \
     --name "$NAME" \
     --shm-size=512m \
     -p 8080:8080 -p 5900:5900 \
     -e DISPLAY_WIDTH="$w" -e DISPLAY_HEIGHT="$h" \
     -v "$WORK_ABS:/work" \
     "$IMAGE" >/dev/null
-  echo "Started '$NAME' at ${geom}. View the desktop at http://localhost:8080/"
+  echo "Created '$NAME' at ${geom}. View the desktop at http://localhost:8080/"
   echo "Work dir: $WORK_ABS <-> /work"
 }
 
@@ -103,12 +148,9 @@ cmd_run() {
   [ "$#" -eq 1 ] || die "run needs exactly one script path"
   local src="$1"
   [ -f "$src" ] || die "no such script: $src"
-  # Run with `node`, using suchibot as a LIBRARY — not its CLI. The CLI calls
-  # startListening() for you, which pins the event loop open so the process
-  # never exits. As a library, a pure-action script never starts listening and
-  # exits on its own. (A script that registers on* handlers must call
-  # suchibot.stopListening() itself to exit.) NODE_PATH lets require("suchibot")
-  # resolve the globally-installed package; also baked into the image's ENV.
+  # Run with `node`, not the `suchibot` CLI: the CLI auto-starts the input
+  # listener, which keeps the process alive. NODE_PATH lets require("suchibot")
+  # resolve the global package (also set as the image's ENV).
   local staged=".drive-ui-in-docker-run.js"
   cat "$src" > "$WORK_ABS/$staged"
   docker exec -e DISPLAY=:0 -e NODE_PATH=/usr/local/lib/node_modules "$NAME" \
@@ -145,8 +187,10 @@ cmd_status() {
     echo "container: $NAME (running)  image: $IMAGE"
     echo "display:   $(disp_size 2>/dev/null || echo '?')"
     echo "view:      http://localhost:8080/"
+  elif exists; then
+    echo "container: $NAME (stopped — 'up' to resume)"
   else
-    echo "container: $NAME (stopped)"
+    echo "container: $NAME (not created)"
   fi
   echo "work dir:  $WORK_ABS"
   ls -1 "$WORK_ABS" 2>/dev/null | sed 's/^/  - /' || true
@@ -154,8 +198,14 @@ cmd_status() {
 
 cmd_down() {
   running || { echo "not running"; return 0; }
+  docker stop "$NAME" >/dev/null
+  echo "Stopped '$NAME' — state preserved. Resume with 'up'; fully remove with 'destroy'."
+}
+
+cmd_destroy() {
+  exists || { echo "nothing to remove"; return 0; }
   docker rm -f "$NAME" >/dev/null
-  echo "Removed '$NAME'."
+  echo "Removed '$NAME' (container and everything installed in it is gone)."
 }
 
 sub="${1:-}"; shift || true
@@ -172,6 +222,7 @@ case "$sub" in
   vncshot)      cmd_vncshot "$@" ;;
   status)       cmd_status "$@" ;;
   down)         cmd_down "$@" ;;
+  destroy)      cmd_destroy "$@" ;;
   ""|-h|--help|help)
     sed -n '2,40p' "$0" | sed 's/^# \{0,1\}//' ;;
   *) die "unknown command '$sub' (try: drive-ui-in-docker help)" ;;

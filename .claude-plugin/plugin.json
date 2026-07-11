@@ -1,8 +1,10 @@
 {
-  "name": "suchipi-tools",
-  "description": "suchipi's Claude Code tools. Provides the drive-ui-in-docker skill: drive and observe arbitrary GUI apps running in Docker via noVNC + suchibot, with ffmpeg/vncsnapshot screen capture.",
+  "name": "suchipi-skills",
+  "description": "suchipi's Claude Code skills. Provides the drive-ui-in-docker skill: drive and observe arbitrary GUI apps running in Docker via noVNC + suchibot, with ffmpeg/vncsnapshot screen capture.",
   "author": {
     "name": "Lily Skye",
     "email": "me@suchipi.com"
-  }
+  },
+  "homepage": "https://github.com/suchipi/skills",
+  "repository": "https://github.com/suchipi/skills"
 }

@@ -11,8 +11,8 @@
 #   drive-ui-in-docker up [WxH]                 Start the bare VNC desktop (default 1280x800)
 #   drive-ui-in-docker launch <cmd...>          Launch a UI app inside the running desktop (detached)
 #   drive-ui-in-docker shot [name.png]          Grab the screen -> $WORK/name.png (default shot.png)
-#   drive-ui-in-docker record-start [name.mp4]  Start screen recording -> $WORK/name.mp4
-#   drive-ui-in-docker record-stop              Stop the recording (finalizes the mp4)
+#   drive-ui-in-docker record-start [name.flv]  Start screen recording -> $WORK/name.flv (watch live)
+#   drive-ui-in-docker record-stop              Stop the recorder (the .flv is already complete)
 #   drive-ui-in-docker run <script.js>          Run a suchibot script inside the container
 #   drive-ui-in-docker exec <cmd...>            Run an arbitrary command inside the container (DISPLAY=:0)
 #   drive-ui-in-docker shell                    Interactive shell inside the container
@@ -127,19 +127,23 @@ cmd_shot() {
 
 cmd_record_start() {
   require_up
-  local name="${1:-rec.mp4}"
+  local name="${1:-rec.flv}"
   local size; size="$(disp_size)"
+  # FLV + low-latency H.264, flushing every packet to disk (-flush_packets 1), so
+  # the file is a valid, growing video the whole time it records — watch it live
+  # (e.g. ffplay). Without the flush, the muxer buffers and nothing hits disk
+  # until the recorder stops.
   docker exec -d -e DISPLAY=:0 "$NAME" sh -c \
-    "ffmpeg -y -loglevel error -f x11grab -draw_mouse 1 -video_size $size -framerate 15 -i :0.0 -pix_fmt yuv420p /work/$name & echo \$! > /work/rec.pid"
-  echo "Recording -> $WORK_ABS/$name (stop with: drive-ui-in-docker record-stop)"
+    "ffmpeg -y -loglevel error -f x11grab -draw_mouse 1 -video_size $size -framerate 15 -i :0.0 -c:v libx264 -preset veryfast -tune zerolatency -flush_packets 1 -pix_fmt yuv420p /work/$name & echo \$! > /work/rec.pid"
+  echo "Recording -> $WORK_ABS/$name (watch it live; stop with: drive-ui-in-docker record-stop)"
 }
 
 cmd_record_stop() {
   require_up
-  # SIGINT lets ffmpeg flush the moov atom so the mp4 is playable.
-  docker exec "$NAME" sh -c 'test -f /work/rec.pid && kill -INT "$(cat /work/rec.pid)" && rm -f /work/rec.pid' \
+  # The .flv is already a complete, valid video at every moment, so stopping is
+  # just terminating the recorder — there's no finalization step.
+  docker exec "$NAME" sh -c 'test -f /work/rec.pid && kill "$(cat /work/rec.pid)" && rm -f /work/rec.pid' \
     || die "no active recording"
-  sleep 1
   echo "Recording stopped."
 }
 

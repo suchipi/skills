@@ -121,8 +121,11 @@ See `examples/example.suchibot.js`.
   the cursor. Auto-detects the display geometry. Prints the host path.
 - **`$DUID vncshot [name.jpg]`** — alternative via `vncsnapshot` over VNC
   (:5900). Useful if x11grab misbehaves.
-- **`$DUID record-start [name.mp4]` / `record-stop`** — record a video of a
-  whole interaction (e.g. to show the user a demo). Stop finalizes the mp4.
+- **`$DUID record-start [name.flv]` / `record-stop`** — record a video of a
+  whole interaction (e.g. to show the user a demo). The `.flv` is a valid,
+  streamable video while it's being written, so you (or the user) can watch it
+  live as it grows — e.g. `ffplay .tmp/drive-ui-in-docker/rec.flv`. `record-stop`
+  just stops the recorder; the file is already complete.
 
 Read the resulting file from `.tmp/drive-ui-in-docker/` to analyze it.
 
@@ -135,7 +138,7 @@ Read the resulting file from `.tmp/drive-ui-in-docker/` to analyze it.
 | `launch <cmd...>` | Launch a UI app inside the desktop (detached) |
 | `shot [name.png]` | Screenshot via ffmpeg → `$DRIVE_UI_IN_DOCKER_WORK/name` |
 | `vncshot [name.jpg]` | Screenshot via vncsnapshot |
-| `record-start [name.mp4]` / `record-stop` | Screen recording |
+| `record-start [name.flv]` / `record-stop` | Screen recording (live-watchable `.flv`) |
 | `run <script.js>` | Run a suchibot script inside the container |
 | `exec <cmd...>` | Run any command inside (DISPLAY=:0) |
 | `shell` | Interactive shell inside the container |

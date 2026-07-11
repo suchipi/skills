@@ -1,0 +1,178 @@
+#!/usr/bin/env bash
+# drive-ui-in-docker — build/run a docker-novnc container and drive+observe the UI inside it.
+#
+# All commands share one container ($NAME) and one host<->container work dir:
+#   host  $WORK   <->  container /work
+# Screenshots, recordings, and suchibot scripts live there, so the host can
+# Read the images and drop scripts in without docker cp.
+#
+# Usage:
+#   drive-ui-in-docker build                   Build the image from the skill's Dockerfile
+#   drive-ui-in-docker up [WxH]                 Start the bare VNC desktop (default 1280x800)
+#   drive-ui-in-docker launch <cmd...>          Launch a UI app inside the running desktop (detached)
+#   drive-ui-in-docker shot [name.png]          Grab the screen -> $WORK/name.png (default shot.png)
+#   drive-ui-in-docker record-start [name.mp4]  Start screen recording -> $WORK/name.mp4
+#   drive-ui-in-docker record-stop              Stop the recording (finalizes the mp4)
+#   drive-ui-in-docker run <script.js>          Run a suchibot script inside the container
+#   drive-ui-in-docker exec <cmd...>            Run an arbitrary command inside the container (DISPLAY=:0)
+#   drive-ui-in-docker shell                    Interactive shell inside the container
+#   drive-ui-in-docker vncshot [name.jpg]       Alternative capture via vncsnapshot over VNC (:5900)
+#   drive-ui-in-docker status                   Show container + work-dir state
+#   drive-ui-in-docker down                     Stop and remove the container
+#
+# Env overrides: DRIVE_UI_IN_DOCKER_NAME (drive-ui-in-docker),
+#                DRIVE_UI_IN_DOCKER_IMAGE (drive-ui-in-docker:latest),
+#                DRIVE_UI_IN_DOCKER_WORK (.tmp/drive-ui-in-docker)
+set -euo pipefail
+
+NAME="${DRIVE_UI_IN_DOCKER_NAME:-drive-ui-in-docker}"
+IMAGE="${DRIVE_UI_IN_DOCKER_IMAGE:-drive-ui-in-docker:latest}"
+SKILL_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+WORK="${DRIVE_UI_IN_DOCKER_WORK:-.tmp/drive-ui-in-docker}"
+mkdir -p "$WORK"
+WORK_ABS="$(cd "$WORK" && pwd)"
+
+die() { echo "drive-ui-in-docker: $*" >&2; exit 1; }
+running() { [ -n "$(docker ps -q -f "name=^${NAME}$")" ]; }
+require_up() { running || die "container '$NAME' is not running. Run: drive-ui-in-docker up"; }
+
+# Detect the live X display geometry (e.g. 1280x800) from inside the container.
+# awk reads all input (no early `exit`) so xdpyinfo never gets SIGPIPE, which
+# under `set -o pipefail` would otherwise fail this function despite printing.
+disp_size() {
+  docker exec "$NAME" xdpyinfo -display :0 \
+    | awk '/dimensions:/ && !seen {print $2; seen=1}'
+}
+
+cmd_build() {
+  docker build -t "$IMAGE" "$SKILL_DIR"
+}
+
+cmd_up() {
+  running && die "container '$NAME' already running (use 'drive-ui-in-docker down' first)"
+  local geom="${1:-1280x800}"
+  local w="${geom%x*}" h="${geom#*x}"
+  docker run -d --rm \
+    --name "$NAME" \
+    --shm-size=512m \
+    -p 8080:8080 -p 5900:5900 \
+    -e DISPLAY_WIDTH="$w" -e DISPLAY_HEIGHT="$h" \
+    -v "$WORK_ABS:/work" \
+    "$IMAGE" >/dev/null
+  echo "Started '$NAME' at ${geom}. View the desktop at http://localhost:8080/"
+  echo "Work dir: $WORK_ABS <-> /work"
+}
+
+cmd_launch() {
+  require_up
+  [ "$#" -ge 1 ] || die "launch needs a command, e.g. drive-ui-in-docker launch xterm"
+  docker exec -d -e DISPLAY=:0 "$NAME" "$@"
+  echo "Launched inside '$NAME': $*"
+}
+
+cmd_shot() {
+  require_up
+  local name="${1:-shot.png}"
+  local size; size="$(disp_size)"
+  docker exec -e DISPLAY=:0 "$NAME" \
+    ffmpeg -y -loglevel error -f x11grab -draw_mouse 1 \
+      -video_size "$size" -i :0.0 -frames:v 1 "/work/$name"
+  echo "$WORK_ABS/$name"
+}
+
+cmd_record_start() {
+  require_up
+  local name="${1:-rec.mp4}"
+  local size; size="$(disp_size)"
+  docker exec -d -e DISPLAY=:0 "$NAME" sh -c \
+    "ffmpeg -y -loglevel error -f x11grab -draw_mouse 1 -video_size $size -framerate 15 -i :0.0 -pix_fmt yuv420p /work/$name & echo \$! > /work/rec.pid"
+  echo "Recording -> $WORK_ABS/$name (stop with: drive-ui-in-docker record-stop)"
+}
+
+cmd_record_stop() {
+  require_up
+  # SIGINT lets ffmpeg flush the moov atom so the mp4 is playable.
+  docker exec "$NAME" sh -c 'test -f /work/rec.pid && kill -INT "$(cat /work/rec.pid)" && rm -f /work/rec.pid' \
+    || die "no active recording"
+  sleep 1
+  echo "Recording stopped."
+}
+
+cmd_run() {
+  require_up
+  [ "$#" -eq 1 ] || die "run needs exactly one script path"
+  local src="$1"
+  [ -f "$src" ] || die "no such script: $src"
+  # Run with `node`, using suchibot as a LIBRARY — not its CLI. The CLI calls
+  # startListening() for you, which pins the event loop open so the process
+  # never exits. As a library, a pure-action script never starts listening and
+  # exits on its own. (A script that registers on* handlers must call
+  # suchibot.stopListening() itself to exit.) NODE_PATH lets require("suchibot")
+  # resolve the globally-installed package; also baked into the image's ENV.
+  local staged=".drive-ui-in-docker-run.js"
+  cat "$src" > "$WORK_ABS/$staged"
+  docker exec -e DISPLAY=:0 -e NODE_PATH=/usr/local/lib/node_modules "$NAME" \
+    node "/work/$staged"
+}
+
+cmd_exec() {
+  require_up
+  [ "$#" -ge 1 ] || die "exec needs a command"
+  docker exec -e DISPLAY=:0 "$NAME" "$@"
+}
+
+cmd_shell() {
+  require_up
+  docker exec -it -e DISPLAY=:0 "$NAME" bash
+}
+
+cmd_vncshot() {
+  require_up
+  local name="${1:-shot.jpg}"
+  # Xvnc runs with SecurityTypes=none, so no password is needed. Two quirks:
+  #  - the default tight/jpeg encoding negotiation stalls against TigerVNC, so
+  #    force a simple encoding (hextile);
+  #  - vncsnapshot writes the complete JPEG on the first frame but then loops
+  #    without exiting, so bound it with `timeout` and validate the file.
+  docker exec "$NAME" sh -c \
+    "timeout 15 vncsnapshot -quality 100 -encodings hextile localhost:0 '/work/$name' >/dev/null 2>&1; true"
+  docker exec "$NAME" test -s "/work/$name" || die "vncsnapshot produced no image"
+  echo "$WORK_ABS/$name"
+}
+
+cmd_status() {
+  if running; then
+    echo "container: $NAME (running)  image: $IMAGE"
+    echo "display:   $(disp_size 2>/dev/null || echo '?')"
+    echo "view:      http://localhost:8080/"
+  else
+    echo "container: $NAME (stopped)"
+  fi
+  echo "work dir:  $WORK_ABS"
+  ls -1 "$WORK_ABS" 2>/dev/null | sed 's/^/  - /' || true
+}
+
+cmd_down() {
+  running || { echo "not running"; return 0; }
+  docker rm -f "$NAME" >/dev/null
+  echo "Removed '$NAME'."
+}
+
+sub="${1:-}"; shift || true
+case "$sub" in
+  build)        cmd_build "$@" ;;
+  up)           cmd_up "$@" ;;
+  launch)       cmd_launch "$@" ;;
+  shot)         cmd_shot "$@" ;;
+  record-start) cmd_record_start "$@" ;;
+  record-stop)  cmd_record_stop "$@" ;;
+  run)          cmd_run "$@" ;;
+  exec)         cmd_exec "$@" ;;
+  shell)        cmd_shell "$@" ;;
+  vncshot)      cmd_vncshot "$@" ;;
+  status)       cmd_status "$@" ;;
+  down)         cmd_down "$@" ;;
+  ""|-h|--help|help)
+    sed -n '2,40p' "$0" | sed 's/^# \{0,1\}//' ;;
+  *) die "unknown command '$sub' (try: drive-ui-in-docker help)" ;;
+esac

@@ -1,0 +1,15 @@
+{
+  "name": "suchipi-tools",
+  "owner": {
+    "name": "Lily Skye",
+    "email": "me@suchipi.com"
+  },
+  "description": "suchipi's Claude Code plugin marketplace.",
+  "plugins": [
+    {
+      "name": "suchipi-tools",
+      "source": ".",
+      "description": "suchipi's Claude Code tools. Provides the drive-ui-in-docker skill: drive and observe arbitrary GUI apps in Docker (noVNC + suchibot + ffmpeg/vncsnapshot)."
+    }
+  ]
+}

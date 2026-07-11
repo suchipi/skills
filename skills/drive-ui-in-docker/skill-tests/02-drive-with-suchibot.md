@@ -11,6 +11,8 @@ regression.
 ## Steps
 
 ```sh
+export DRIVE_UI_IN_DOCKER_NAME=drive-ui-in-docker-02
+export DRIVE_UI_IN_DOCKER_NO_PORTS=1
 D=skills/drive-ui-in-docker/scripts/drive-ui-in-docker
 $D up 1024x768
 for i in $(seq 1 20); do $D exec xdpyinfo -display :0 >/dev/null 2>&1 && break; sleep 1; done

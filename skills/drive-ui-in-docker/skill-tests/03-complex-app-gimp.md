@@ -13,6 +13,8 @@ real app, not just xterm" test.
 ## Steps
 
 ```sh
+export DRIVE_UI_IN_DOCKER_NAME=drive-ui-in-docker-03
+export DRIVE_UI_IN_DOCKER_NO_PORTS=1
 D=skills/drive-ui-in-docker/scripts/drive-ui-in-docker
 T=skills/drive-ui-in-docker/skill-tests/scripts
 $D up 1280x800

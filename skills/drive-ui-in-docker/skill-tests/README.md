@@ -18,13 +18,22 @@ the app render? did the click land where intended?). So verification is a mix of
 
 - Run every command from the **repo root**. Each block defines `D=` for the CLI.
 - Docker must be running.
-- Tests share one container (`drive-ui-in-docker`) and the host work dir
-  `.tmp/drive-ui-in-docker/` (where screenshots/videos land). Run
-  **[00-build-image.md](00-build-image.md) first**; the rest assume the image
-  exists and are otherwise independent.
-- Each test ends with a **Cleanup** block. To hard-reset at any point:
+- Each test 01–07 uses its **own** container (`drive-ui-in-docker-NN`) via the
+  env prelude at the top of its block (`DRIVE_UI_IN_DOCKER_NAME` +
+  `DRIVE_UI_IN_DOCKER_NO_PORTS=1`, which skips host-port publishing so the
+  containers don't fight over ports 8080/5900). That means **all tests can run
+  in parallel** — one per shell/agent. They share only the image and the host
+  work dir `.tmp/drive-ui-in-docker/` (screenshots/videos land there; filenames
+  are test-prefixed so they don't collide). Run
+  **[00-build-image.md](00-build-image.md) first** to build the shared image.
+  (Trade-off: with ports unpublished you can't open the desktop in a browser
+  during a run — capture still works over the in-container VNC/X server.)
+- Each test ends with a **Cleanup** block. To hard-reset everything at any point:
   ```sh
-  skills/drive-ui-in-docker/scripts/drive-ui-in-docker destroy
+  for n in 01 02 03 04 05 06 07; do
+    DRIVE_UI_IN_DOCKER_NAME=drive-ui-in-docker-$n \
+      skills/drive-ui-in-docker/scripts/drive-ui-in-docker destroy
+  done
   rm -rf .tmp/drive-ui-in-docker
   ```
 - A snippet several tests use to wait for the X server after `up`:

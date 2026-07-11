@@ -24,6 +24,8 @@
 # Env overrides: DRIVE_UI_IN_DOCKER_NAME (drive-ui-in-docker),
 #                DRIVE_UI_IN_DOCKER_IMAGE (drive-ui-in-docker:latest),
 #                DRIVE_UI_IN_DOCKER_WORK (.tmp/drive-ui-in-docker)
+#                DRIVE_UI_IN_DOCKER_NO_PORTS (unset; if set, don't publish host
+#                  ports — lets several differently-named containers run at once)
 set -euo pipefail
 
 NAME="${DRIVE_UI_IN_DOCKER_NAME:-drive-ui-in-docker}"
@@ -97,10 +99,15 @@ cmd_up() {
   fi
   local geom="${1:-1280x800}"
   local w="${geom%x*}" h="${geom#*x}"
+  # Host ports can only be bound once, so suppress publishing (NO_PORTS) when
+  # running several containers in parallel — capture still works over the
+  # in-container VNC/X server, only the browser view URL goes away.
+  local ports="-p 8080:8080 -p 5900:5900"
+  [ -n "${DRIVE_UI_IN_DOCKER_NO_PORTS:-}" ] && ports=""
   docker run -d \
     --name "$NAME" \
     --shm-size=512m \
-    -p 8080:8080 -p 5900:5900 \
+    $ports \
     -e DISPLAY_WIDTH="$w" -e DISPLAY_HEIGHT="$h" \
     -v "$WORK_ABS:/work" \
     "$IMAGE" >/dev/null
@@ -134,7 +141,7 @@ cmd_record_start() {
   # (e.g. ffplay). Without the flush, the muxer buffers and nothing hits disk
   # until the recorder stops.
   docker exec -d -e DISPLAY=:0 "$NAME" sh -c \
-    "ffmpeg -y -loglevel error -f x11grab -draw_mouse 1 -video_size $size -framerate 15 -i :0.0 -c:v libx264 -preset veryfast -tune zerolatency -flush_packets 1 -pix_fmt yuv420p /work/$name & echo \$! > /work/rec.pid"
+    "ffmpeg -y -loglevel error -f x11grab -draw_mouse 1 -video_size $size -framerate 15 -i :0.0 -c:v libx264 -preset veryfast -tune zerolatency -flush_packets 1 -pix_fmt yuv420p /work/$name & echo \$! > /work/${NAME}.pid"
   echo "Recording -> $WORK_ABS/$name (watch it live; stop with: drive-ui-in-docker record-stop)"
 }
 
@@ -142,7 +149,7 @@ cmd_record_stop() {
   require_up
   # The .flv is already a complete, valid video at every moment, so stopping is
   # just terminating the recorder — there's no finalization step.
-  docker exec "$NAME" sh -c 'test -f /work/rec.pid && kill "$(cat /work/rec.pid)" && rm -f /work/rec.pid' \
+  docker exec "$NAME" sh -c 'p="$1"; test -f "$p" && kill "$(cat "$p")" && rm -f "$p"' _ "/work/${NAME}.pid" \
     || die "no active recording"
   echo "Recording stopped."
 }
@@ -155,7 +162,7 @@ cmd_run() {
   # Run with `node`, not the `suchibot` CLI: the CLI auto-starts the input
   # listener, which keeps the process alive. NODE_PATH lets require("suchibot")
   # resolve the global package (also set as the image's ENV).
-  local staged=".drive-ui-in-docker-run.js"
+  local staged=".${NAME}-run.js"
   cat "$src" > "$WORK_ABS/$staged"
   docker exec -e DISPLAY=:0 -e NODE_PATH=/usr/local/lib/node_modules "$NAME" \
     node "/work/$staged"

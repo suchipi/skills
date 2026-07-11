@@ -10,6 +10,8 @@ a browser) and reuse it across sessions without reinstalling.
 ## Steps
 
 ```sh
+export DRIVE_UI_IN_DOCKER_NAME=drive-ui-in-docker-06
+export DRIVE_UI_IN_DOCKER_NO_PORTS=1
 D=skills/drive-ui-in-docker/scripts/drive-ui-in-docker
 $D destroy                                   # ensure clean start
 $D up 1024x768

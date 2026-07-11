@@ -12,6 +12,8 @@ that leaves the file empty until stop (fixed with `-flush_packets 1`).
 ## Steps
 
 ```sh
+export DRIVE_UI_IN_DOCKER_NAME=drive-ui-in-docker-05
+export DRIVE_UI_IN_DOCKER_NO_PORTS=1
 D=skills/drive-ui-in-docker/scripts/drive-ui-in-docker
 W=.tmp/drive-ui-in-docker
 T=skills/drive-ui-in-docker/skill-tests/scripts

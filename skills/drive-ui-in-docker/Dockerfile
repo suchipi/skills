@@ -29,5 +29,17 @@ RUN set -ex; \
 # So `node /work/script.js` resolves require("suchibot") from the global install.
 ENV NODE_PATH=/usr/local/lib/node_modules
 
+# The novnc base runs fluxbox with the ubuntu-light style, which paints the
+# Ubuntu logo across the root window. A plain black desktop makes captured
+# screenshots much easier to read at a glance. "background: none" is fluxbox's
+# documented switch to leave the root unpainted, and Xvnc initializes it to
+# solid black; fluxbox copies this system template into ~/.fluxbox/overlay on
+# first launch.
+RUN printf '%s\n' \
+      '! Solid-black desktop instead of the ubuntu-light logo wallpaper,' \
+      '! so screenshots are easy to read at a glance.' \
+      'background: none' \
+      > /etc/X11/fluxbox/overlay
+
 # Base image already sets ENTRYPOINT to /vnc/entrypoint.tcl, which starts the
 # VNC stack and then (optionally) launches argv as the target app. We inherit it.

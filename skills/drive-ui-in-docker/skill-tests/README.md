@@ -28,7 +28,10 @@ the app render? did the click land where intended?). So verification is a mix of
   **[00-build-image.md](00-build-image.md) first** to build the shared image.
   (Trade-off: with ports unpublished you can't open the desktop in a browser
   during a run — capture still works over the in-container VNC/X server.)
-- Each test ends with a **Cleanup** block. To hard-reset everything at any point:
+- Each test ends with a **Cleanup** block, but several (01, 02, 04, 05) clean up
+  with `down`, which *preserves* the stopped container. So **after you've finished
+  all the tests, destroy the leftovers** (this also serves as a hard-reset at any
+  point):
   ```sh
   for n in 01 02 03 04 05 06 07; do
     DRIVE_UI_IN_DOCKER_NAME=drive-ui-in-docker-$n \

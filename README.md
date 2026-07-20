@@ -3,7 +3,7 @@
 suchipi's personal [Claude Code](https://claude.com/claude-code) plugin marketplace,
 distributed from [github.com/suchipi/skills](https://github.com/suchipi/skills).
 
-It provides a single plugin — **`suchipi-skills`** — that bundles the skills below.
+It provides a single plugin - **`suchipi-skills`** - that bundles the skills below.
 More may be added over time.
 
 ## Skills
@@ -13,11 +13,26 @@ More may be added over time.
 Drive and observe any GUI application running inside a Docker container. It spins up
 a noVNC desktop (Xvnc + fluxbox + noVNC) with [suchibot](https://github.com/suchipi/suchibot)
 for mouse/keyboard input and ffmpeg/vncsnapshot for screen capture, so Claude can
-automate, test, or explore arbitrary desktop UI apps headlessly — clicking through a
+automate, test, or explore arbitrary desktop UI apps headlessly - clicking through a
 UI, screenshotting an app, or recording a demo. A human can watch (and take over) the
 desktop live at `http://localhost:8080/` while Claude drives.
 
 Requires **Docker** on the machine running Claude Code.
+
+### `drive-browser`
+
+Drive and observe a real web browser on the host, no Docker involved. A detached daemon
+owns a [puppeteer](https://pptr.dev/)-launched browser and runs the page commands, so a
+helper CLI can navigate, click, type, screenshot, read the DOM, capture console output,
+run arbitrary puppeteer scripts, and record video across separate invocations. It runs
+headless by default, and `--headful` opens a real window a human can watch (and take
+over) while Claude drives. **Chrome or Firefox** - `up --browser firefox` uses
+puppeteer's WebDriver BiDi support (everything works there except video recording, which
+is CDP-only).
+
+Requires **Node >= 22.12** on the machine running Claude Code (plus `ffmpeg` if you want
+video recording). The browser itself is downloaded by puppeteer on first use. The CLI is
+TypeScript run directly by Node's built-in type stripping, so there is no build step.
 
 ## Installation
 

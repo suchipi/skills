@@ -1,0 +1,11 @@
+{
+  "name": "drive-browser-cli",
+  "private": true,
+  "type": "module",
+  "description": "TypeScript sources for the drive-browser CLI. Node runs them directly via type stripping; the devDependency is only needed to typecheck or edit them.",
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "puppeteer": "^25.3.0",
+    "typescript": "^7.0.2"
+  }
+}

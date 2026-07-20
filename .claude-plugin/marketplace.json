@@ -9,7 +9,7 @@
     {
       "name": "suchipi-skills",
       "source": ".",
-      "description": "suchipi's Claude Code skills. Provides the drive-ui-in-docker skill: drive and observe arbitrary GUI apps in Docker (noVNC + suchibot + ffmpeg/vncsnapshot)."
+      "description": "suchipi's Claude Code skills. Provides drive-ui-in-docker (drive arbitrary GUI apps in Docker via noVNC + suchibot) and drive-browser (drive a real web browser on the host via node + puppeteer)."
     }
   ]
 }

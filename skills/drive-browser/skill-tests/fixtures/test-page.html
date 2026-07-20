@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>drive-browser test page</title>
+    <style>
+      body { font-family: system-ui, sans-serif; padding: 2rem; }
+      #out { margin-top: 1rem; font-weight: bold; }
+      #later { display: none; color: green; }
+      .tall { height: 2000px; }
+    </style>
+  </head>
+  <body>
+    <h1>Test Page</h1>
+
+    <input id="name" placeholder="your name" />
+    <button id="greet">Greet</button>
+    <a id="link" href="#anchor">a link</a>
+
+    <div id="out"></div>
+    <div id="later">appeared</div>
+
+    <p>
+      <button id="boom">Throw</button>
+      <button id="alert">Alert</button>
+      <button id="popup">Open tab</button>
+    </p>
+
+    <div class="tall"></div>
+    <div id="bottom">bottom of page</div>
+
+    <script>
+      console.log("page loaded");
+
+      document.getElementById("greet").onclick = () => {
+        document.getElementById("out").textContent =
+          "Hello, " + document.getElementById("name").value + "!";
+        console.warn("greeted");
+        setTimeout(() => {
+          document.getElementById("later").style.display = "block";
+        }, 1000);
+      };
+
+      document.getElementById("boom").onclick = () => {
+        throw new Error("kaboom");
+      };
+      document.getElementById("alert").onclick = () => alert("hi there");
+      document.getElementById("popup").onclick = () => window.open("about:blank");
+    </script>
+  </body>
+</html>

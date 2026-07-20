@@ -1,6 +1,6 @@
 {
   "name": "suchipi-skills",
-  "description": "suchipi's Claude Code skills. Provides the drive-ui-in-docker skill: drive and observe arbitrary GUI apps running in Docker via noVNC + suchibot, with ffmpeg/vncsnapshot screen capture.",
+  "description": "suchipi's Claude Code skills. Provides drive-ui-in-docker (drive and observe arbitrary GUI apps running in Docker via noVNC + suchibot) and drive-browser (drive and observe a real web browser on the host via node + puppeteer).",
   "author": {
     "name": "Lily Skye",
     "email": "me@suchipi.com"

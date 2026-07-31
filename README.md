@@ -39,8 +39,7 @@ claude plugin marketplace add suchipi/skills
 claude plugin install suchipi-skills@suchipi-skills
 ```
 
-> These commands need a version of Claude Code with plugin support (the `/plugin`
-> command). If you don't have it, update Claude Code first.
+> These commands need a version of Claude Code with plugin support (the `/plugin` command). If you don't have it, update Claude Code first.
 
 ## Usage
 

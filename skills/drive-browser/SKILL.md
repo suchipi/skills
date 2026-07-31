@@ -22,8 +22,8 @@ Automate and observe a web page on the host machine using an observe -> act -> o
 Everything goes through one helper CLI: `scripts/drive-browser.ts`. A **detached daemon
 process owns the browser and runs the page commands**, so the browser stays open between
 commands and keeps capturing console output the whole time; the CLI just sends each
-command to it over a unix socket. Screenshots, videos, and logs land in the work dir
-(`.tmp/drive-browser`) where you can Read them.
+command to it over a unix socket. Screenshots, videos, and logs land in the work dir,
+a scratch directory you pick to suit the project (see below), where you can Read them.
 
 This is the non-Docker sibling of `drive-ui-in-docker`: same loop, but it drives a
 browser via the DevTools protocol (selectors, DOM, console) instead of an X11 desktop
@@ -33,14 +33,16 @@ via synthetic input.
 
 Alias the CLI via `${CLAUDE_SKILL_DIR}` - the skill's own directory, which Claude Code
 sets whether this is a project skill or an installed plugin (the fallback covers the
-case where it isn't set). Run commands from the project root so the work dir lands there:
+case where it isn't set). Point `DRIVE_BROWSER_WORK` at a scratch directory the project
+is happy to have written to, per **Choosing the work dir** below:
 
 ```sh
 DB="${CLAUDE_SKILL_DIR:-.claude/skills/drive-browser}/scripts/drive-browser.ts"
+export DRIVE_BROWSER_WORK=/tmp/drive-browser   # or a gitignored scratch dir in the repo
 
 $DB up --url http://localhost:3000   # launch (first run installs puppeteer + Chrome)
 $DB elements                         # see what's clickable, with selectors
-$DB screenshot state.png             # capture -> .tmp/drive-browser/state.png (Read it)
+$DB screenshot state.png             # capture -> $DRIVE_BROWSER_WORK/state.png (Read it)
 $DB type '#email' me@example.com
 $DB click 'button[type=submit]'
 $DB wait --idle
@@ -57,6 +59,16 @@ Requires **Node >= 22.12** (puppeteer 25's floor) on PATH. The CLI is TypeScript
 Node runs directly via type stripping - the shebang passes
 `--experimental-strip-types`, so there is no build step and nothing to install for the
 CLI itself. `ffmpeg` is only needed for `record-start`.
+
+## Choosing the work dir
+
+Screenshots, videos, logs, the puppeteer install, and the browser profile all land in one work dir, so it has to be somewhere scratch files are welcome. Pick it at the start of the session and export `DRIVE_BROWSER_WORK`; every command reads it, so exporting it once in the shell you drive from covers the whole session.
+
+1. Get the repo root with `git rev-parse --show-toplevel`. If that fails, the project isn't a git repo: go to step 3.
+2. Read `<root>/.gitignore` and look for an ignored **general-purpose scratch directory** - `.tmp/`, `tmp/`, `temp/`, `.temp/`, `scratch/`, or similar. If there is one, use it: `DRIVE_BROWSER_WORK=<root>/<that dir>/drive-browser`. Skip any entry that is ignored for a *specific* purpose, however tmp-ish its name sounds: build output (`dist/`, `build/`, `out/`, `target/`, `.next/`), tool caches (`.cache/`, `.parcel-cache/`, `.pytest_cache/`, `node_modules/.cache/`), coverage, logs, or anything scoped to one tool (`.gradle/tmp/`). Those belong to something else, which will either be confused by a browser profile appearing inside them or delete it out from under you. If the only candidates look like that, treat the repo as having no scratch dir and go to step 3.
+3. No repo, or no general-purpose scratch dir: use the system temp dir - `DRIVE_BROWSER_WORK=/tmp/drive-browser` (`/private/tmp/drive-browser` for macOS's real path).
+
+Don't edit `.gitignore` or invent a new ignored directory just to have somewhere to write. The point of reading `.gitignore` is to use what the project already sanctions, and `/tmp` is a perfectly good answer when nothing does. An explicit project instruction naming a scratch dir outranks all of this.
 
 ## The observe -> act loop (how you should work)
 
@@ -97,8 +109,9 @@ CLI itself. `ffmpeg` is only needed for `record-start`.
 | `down` | Close the browser; the profile (cookies, logins) is preserved |
 | `destroy [--force]` | Close it and delete the profile. Refuses a profile outside the work dir unless `--force` |
 
-Env override: `DRIVE_BROWSER_WORK` (default `.tmp/drive-browser`) - set it to run several
-independent browsers side by side.
+`DRIVE_BROWSER_WORK` sets the work dir (see **Choosing the work dir**); left unset it
+falls back to `/tmp/drive-browser`. Distinct values also let you run several independent
+browsers side by side.
 
 ## Writing scripts (`run`)
 
@@ -177,7 +190,7 @@ switching, and profile persistence (cookies *and* `localStorage` survive `down` 
   command (this is required for Firefox, which allows one WebDriver BiDi session, and it
   is what keeps console capture running between commands). If it dies, the browser goes
   with it. `status` reports what's live; `down` then `up` is the reset. Daemon errors are
-  appended to `.tmp/drive-browser/daemon.log`.
+  appended to `daemon.log` in the work dir.
 - **Dialogs are auto-dismissed** and logged, so an `alert`/`confirm` can't block later
   commands. If a flow needs "OK" rather than "Cancel", handle it inside a `run` script
   with your own `page.on("dialog", ...)`.
@@ -206,7 +219,7 @@ switching, and profile persistence (cookies *and* `localStorage` survive `down` 
   recording follows the tab that was active when it started, even if you `use` another.
 - **If `up` cannot find a browser**, puppeteer's postinstall may have been skipped:
   newer npm gates install scripts. Run `npm approve-scripts --allow-scripts-pending`
-  (or `npx puppeteer browsers install chrome`) inside `.tmp/drive-browser`, or point
+  (or `npx puppeteer browsers install chrome`) inside the work dir, or point
   `up --channel chrome` at a system Chrome instead.
 - **Editing the CLI**: sources are TypeScript under `scripts/` (entry `drive-browser.ts`,
   the rest in `scripts/lib/`). Running them needs nothing installed; to typecheck or get

@@ -399,7 +399,7 @@ export function usage(): void {
       "screenshot options: --full (full page)  --selector S (just that element)",
       "destroy options:    --force (delete a profile outside the work dir)",
       "",
-      "Env overrides: DRIVE_BROWSER_WORK (default .tmp/drive-browser)",
+      "Env overrides: DRIVE_BROWSER_WORK (default /tmp/drive-browser)",
     ].join("\n")
   );
 }

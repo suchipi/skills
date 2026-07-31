@@ -13,6 +13,7 @@ geometry (the real-world reason to resize).
 ```sh
 export DRIVE_UI_IN_DOCKER_NAME=drive-ui-in-docker-07
 export DRIVE_UI_IN_DOCKER_NO_PORTS=1
+export DRIVE_UI_IN_DOCKER_WORK=.tmp/drive-ui-in-docker
 D=skills/drive-ui-in-docker/scripts/drive-ui-in-docker
 W=.tmp/drive-ui-in-docker
 dims() { $D exec xdpyinfo -display :0 | awk '/dimensions/{print $2}'; }

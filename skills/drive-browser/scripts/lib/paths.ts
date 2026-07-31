@@ -2,7 +2,7 @@ import path from "node:path";
 
 import { UserError } from "./errors.ts";
 
-export const WORK = path.resolve(process.env.DRIVE_BROWSER_WORK || ".tmp/drive-browser");
+export const WORK = path.resolve(process.env.DRIVE_BROWSER_WORK || "/tmp/drive-browser");
 export const SESSION = path.join(WORK, "session.json");
 export const STATE = path.join(WORK, "state.json");
 export const LOCK = path.join(WORK, "up.lock");

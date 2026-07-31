@@ -23,7 +23,7 @@
 #
 # Env overrides: DRIVE_UI_IN_DOCKER_NAME (drive-ui-in-docker),
 #                DRIVE_UI_IN_DOCKER_IMAGE (drive-ui-in-docker:latest),
-#                DRIVE_UI_IN_DOCKER_WORK (.tmp/drive-ui-in-docker)
+#                DRIVE_UI_IN_DOCKER_WORK (/tmp/drive-ui-in-docker)
 #                DRIVE_UI_IN_DOCKER_NO_PORTS (unset; if set, don't publish host
 #                  ports — lets several differently-named containers run at once)
 set -euo pipefail
@@ -31,7 +31,7 @@ set -euo pipefail
 NAME="${DRIVE_UI_IN_DOCKER_NAME:-drive-ui-in-docker}"
 IMAGE="${DRIVE_UI_IN_DOCKER_IMAGE:-drive-ui-in-docker:latest}"
 SKILL_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-WORK="${DRIVE_UI_IN_DOCKER_WORK:-.tmp/drive-ui-in-docker}"
+WORK="${DRIVE_UI_IN_DOCKER_WORK:-/tmp/drive-ui-in-docker}"
 mkdir -p "$WORK"
 WORK_ABS="$(cd "$WORK" && pwd)"
 

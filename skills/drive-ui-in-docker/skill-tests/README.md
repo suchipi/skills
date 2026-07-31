@@ -19,7 +19,8 @@ the app render? did the click land where intended?). So verification is a mix of
 - Run every command from the **repo root**. Each block defines `D=` for the CLI.
 - Docker must be running.
 - Each test 01–07 uses its **own** container (`drive-ui-in-docker-NN`) via the
-  env prelude at the top of its block (`DRIVE_UI_IN_DOCKER_NAME` +
+  env prelude at the top of its block (`DRIVE_UI_IN_DOCKER_NAME`,
+  `DRIVE_UI_IN_DOCKER_WORK` to pin the shared work dir inside the repo, and
   `DRIVE_UI_IN_DOCKER_NO_PORTS=1`, which skips host-port publishing so the
   containers don't fight over ports 8080/5900). That means **all tests can run
   in parallel** — one per shell/agent. They share only the image and the host

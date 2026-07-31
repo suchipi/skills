@@ -21,7 +21,7 @@ observe → act → observe loop:
 
 Everything is coordinated by one helper CLI: `scripts/drive-ui-in-docker`. All
 commands share one container (`drive-ui-in-docker`) and one host↔container work
-dir (`.tmp/drive-ui-in-docker` ↔ `/work`), so screenshots land on the host where
+dir (a scratch dir you pick ↔ `/work`), so screenshots land on the host where
 you can Read them, and scripts you write into the work dir are runnable inside.
 
 ## Architecture
@@ -37,17 +37,19 @@ you can Read them, and scripts you write into the work dir are runnable inside.
 
 The helper CLI is bundled with this skill. Alias it via `${CLAUDE_SKILL_DIR}` —
 the skill's own directory, which Claude Code sets whether this is a project skill
-or an installed plugin (the fallback covers the case where it isn't set). Run the
-commands from your project root so the `.tmp/drive-ui-in-docker` work dir lands
-there (the alias `$DUID` is just shorthand for the long command):
+or an installed plugin (the fallback covers the case where it isn't set). Point
+`DRIVE_UI_IN_DOCKER_WORK` at a scratch directory the project is happy to have
+written to, per **Choosing the work dir** below (the alias `$DUID` is just
+shorthand for the long command):
 
 ```sh
 DUID="${CLAUDE_SKILL_DIR:-.claude/skills/drive-ui-in-docker}/scripts/drive-ui-in-docker"
+export DRIVE_UI_IN_DOCKER_WORK=/tmp/drive-ui-in-docker   # or a gitignored scratch dir in the repo
 
 $DUID build                 # one-time: build drive-ui-in-docker:latest (slow — pulls Node, native deps)
 $DUID up 1280x800           # start the desktop at a given resolution
 $DUID launch xterm          # launch the target app inside it (detached)
-$DUID shot                  # capture -> .tmp/drive-ui-in-docker/shot.png  (Read it to see the screen)
+$DUID shot                  # capture -> $DRIVE_UI_IN_DOCKER_WORK/shot.png  (Read it to see the screen)
 $DUID run examples/example.suchibot.js   # drive it
 $DUID shot after.png        # confirm the result
 $DUID down                  # stop it (keeps the container + anything installed in it)
@@ -57,13 +59,25 @@ To drive a real app, replace `launch xterm` with your app's launch command
 (e.g. `$DUID launch /opt/myapp/myapp`), or bake the app into a Dockerfile that
 uses `FROM drive-ui-in-docker:latest` and installs it.
 
+## Choosing the work dir
+
+Screenshots, recordings, and the suchibot scripts you stage all live in the work dir, which is bind-mounted into the container as `/work`, so it has to be somewhere scratch files are welcome. Pick it at the start of the session and export `DRIVE_UI_IN_DOCKER_WORK`; every command reads it, so exporting it once in the shell you drive from covers the whole session.
+
+1. Get the repo root with `git rev-parse --show-toplevel`. If that fails, the project isn't a git repo: go to step 3.
+2. Read `<root>/.gitignore` and look for an ignored **general-purpose scratch directory** - `.tmp/`, `tmp/`, `temp/`, `.temp/`, `scratch/`, or similar. If there is one, use it: `DRIVE_UI_IN_DOCKER_WORK=<root>/<that dir>/drive-ui-in-docker`. Skip any entry that is ignored for a *specific* purpose, however tmp-ish its name sounds: build output (`dist/`, `build/`, `out/`, `target/`, `.next/`), tool caches (`.cache/`, `.parcel-cache/`, `.pytest_cache/`, `node_modules/.cache/`), coverage, logs, or anything scoped to one tool (`.gradle/tmp/`). Those belong to something else, which will either be confused by a container mount appearing inside them or delete your captures out from under you. If the only candidates look like that, treat the repo as having no scratch dir and go to step 3.
+3. No repo, or no general-purpose scratch dir: use the system temp dir - `DRIVE_UI_IN_DOCKER_WORK=/tmp/drive-ui-in-docker` (`/private/tmp/drive-ui-in-docker` for macOS's real path).
+
+Don't edit `.gitignore` or invent a new ignored directory just to have somewhere to write. The point of reading `.gitignore` is to use what the project already sanctions, and `/tmp` is a perfectly good answer when nothing does. An explicit project instruction naming a scratch dir outranks all of this.
+
+Whatever you pick must be mountable by Docker. If `up` fails with a "mounts denied" / "path is not shared" error, the directory is outside Docker's file-sharing list: add it there, or choose one under the repo or your home dir instead.
+
 ## The observe → act loop (how you should work)
 
-1. `$DUID shot state.png` then **Read** `.tmp/drive-ui-in-docker/state.png`.
+1. `$DUID shot state.png` then **Read** `$DRIVE_UI_IN_DOCKER_WORK/state.png`.
    Identify the pixel coordinates of the element you need to interact with. The
    display size is fixed and known (whatever you passed to `up`, default
    1280×800), so image coordinates map 1:1 to suchibot coordinates.
-2. Write a small suchibot script into `.tmp/drive-ui-in-docker/` (or anywhere —
+2. Write a small suchibot script into the work dir (or anywhere —
    `run` stages it in) that performs ONE coherent step. Keep steps small so you
    can verify each one.
 3. `$DUID run <script.js>`.
@@ -133,10 +147,10 @@ See `examples/example.suchibot.js`.
 - **`$DUID record-start [name.flv]` / `record-stop`** — record a video of a
   whole interaction (e.g. to show the user a demo). The `.flv` is a valid,
   streamable video while it's being written, so you (or the user) can watch it
-  live as it grows — e.g. `ffplay .tmp/drive-ui-in-docker/rec.flv`. `record-stop`
+  live as it grows — e.g. `ffplay $DRIVE_UI_IN_DOCKER_WORK/rec.flv`. `record-stop`
   just stops the recorder; the file is already complete.
 
-Read the resulting file from `.tmp/drive-ui-in-docker/` to analyze it.
+Read the resulting file from the work dir to analyze it.
 
 ## All commands
 
@@ -156,7 +170,8 @@ Read the resulting file from `.tmp/drive-ui-in-docker/` to analyze it.
 | `destroy` | Remove the container entirely (cleanup when done with the skill) |
 
 Env overrides: `DRIVE_UI_IN_DOCKER_NAME` (container), `DRIVE_UI_IN_DOCKER_IMAGE`,
-`DRIVE_UI_IN_DOCKER_WORK` (host work dir).
+`DRIVE_UI_IN_DOCKER_WORK` (host work dir; see **Choosing the work dir** - left unset
+it falls back to `/tmp/drive-ui-in-docker`).
 
 ## Notes & troubleshooting
 

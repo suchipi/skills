@@ -6,47 +6,35 @@ description: >-
   mouse/keyboard input and ffmpeg/vncsnapshot for screen capture, so you can
   automate, test, or explore arbitrary desktop UI apps headlessly. Use when the
   user wants to control, script, screenshot, or record a GUI app in a container
-  — e.g. "automate this Electron/GTK/Qt/X11 app", "click through this UI",
+  - e.g. "automate this Electron/GTK/Qt/X11 app", "click through this UI",
   "screenshot the app running in Docker", or "record a demo of the UI".
 ---
 
 # Drive UI in Docker
 
-Automate and observe any X11 GUI application inside a container using an
-observe → act → observe loop:
+Automate and observe any X11 GUI application inside a container using an observe → act → observe loop:
 
-1. **Observe** — capture the screen to a PNG and Read it to see the current state.
-2. **Act** — write a suchibot script (mouse/keyboard) and run it inside the container.
-3. **Repeat** — capture again to confirm the effect, then continue.
+1. **Observe** - capture the screen to a PNG and Read it to see the current state.
+2. **Act** - write a suchibot script (mouse/keyboard) and run it inside the container.
+3. **Repeat** - capture again to confirm the effect, then continue.
 
-Everything is coordinated by one helper CLI: `scripts/drive-ui-in-docker`. All
-commands share one container (`drive-ui-in-docker`) and one host↔container work
-dir (a scratch dir you pick ↔ `/work`), so screenshots land on the host where
-you can Read them, and scripts you write into the work dir are runnable inside.
+Everything is coordinated by one helper CLI: `scripts/drive-ui-in-docker`. All commands share one container (`drive-ui-in-docker`) and one host↔container work dir (a scratch dir you pick ↔ `/work`), so screenshots land on the host where you can Read them, and scripts you write into the work dir are runnable inside.
 
 ## Architecture
 
-- **Base image `suchipi/novnc`**: runs `Xvnc :0` (VNC on port **5900**, no auth),
-  `fluxbox`, and `noVNC` (web on port **8080**). `DISPLAY=:0`.
-- **This skill's Dockerfile** extends it with Node + **suchibot** (input) and
-  **ffmpeg / vncsnapshot / imagemagick** (capture). suchibot uses nut.js +
-  uiohook-napi, so it **must run inside the container** where the X server is.
+- **Base image `suchipi/novnc`**: runs `Xvnc :0` (VNC on port **5900**, no auth), `fluxbox`, and `noVNC` (web on port **8080**). `DISPLAY=:0`.
+- **This skill's Dockerfile** extends it with Node + **suchibot** (input) and **ffmpeg / vncsnapshot / imagemagick** (capture). suchibot uses nut.js + uiohook-napi, so it **must run inside the container** where the X server is.
 - The human can watch live at **http://localhost:8080/** while you drive.
 
 ## Quick start
 
-The helper CLI is bundled with this skill. Alias it via `${CLAUDE_SKILL_DIR}` —
-the skill's own directory, which Claude Code sets whether this is a project skill
-or an installed plugin (the fallback covers the case where it isn't set). Point
-`DRIVE_UI_IN_DOCKER_WORK` at a scratch directory the project is happy to have
-written to, per **Choosing the work dir** below (the alias `$DUID` is just
-shorthand for the long command):
+The helper CLI is bundled with this skill. Alias it via `${CLAUDE_SKILL_DIR}` - the skill's own directory, which Claude Code sets whether this is a project skill or an installed plugin (the fallback covers the case where it isn't set). Point `DRIVE_UI_IN_DOCKER_WORK` at a scratch directory the project is happy to have written to, per **Choosing the work dir** below (the alias `$DUID` is just shorthand for the long command):
 
 ```sh
 DUID="${CLAUDE_SKILL_DIR:-.claude/skills/drive-ui-in-docker}/scripts/drive-ui-in-docker"
 export DRIVE_UI_IN_DOCKER_WORK=/tmp/drive-ui-in-docker   # or a gitignored scratch dir in the repo
 
-$DUID build                 # one-time: build drive-ui-in-docker:latest (slow — pulls Node, native deps)
+$DUID build                 # one-time: build drive-ui-in-docker:latest (slow - pulls Node, native deps)
 $DUID up 1280x800           # start the desktop at a given resolution
 $DUID launch xterm          # launch the target app inside it (detached)
 $DUID shot                  # capture -> $DRIVE_UI_IN_DOCKER_WORK/shot.png  (Read it to see the screen)
@@ -55,9 +43,7 @@ $DUID shot after.png        # confirm the result
 $DUID down                  # stop it (keeps the container + anything installed in it)
 ```
 
-To drive a real app, replace `launch xterm` with your app's launch command
-(e.g. `$DUID launch /opt/myapp/myapp`), or bake the app into a Dockerfile that
-uses `FROM drive-ui-in-docker:latest` and installs it.
+To drive a real app, replace `launch xterm` with your app's launch command (e.g. `$DUID launch /opt/myapp/myapp`), or bake the app into a Dockerfile that uses `FROM drive-ui-in-docker:latest` and installs it.
 
 ## Choosing the work dir
 
@@ -73,28 +59,16 @@ Whatever you pick must be mountable by Docker. If `up` fails with a "mounts deni
 
 ## The observe → act loop (how you should work)
 
-1. `$DUID shot state.png` then **Read** `$DRIVE_UI_IN_DOCKER_WORK/state.png`.
-   Identify the pixel coordinates of the element you need to interact with. The
-   display size is fixed and known (whatever you passed to `up`, default
-   1280×800), so image coordinates map 1:1 to suchibot coordinates.
-2. Write a small suchibot script into the work dir (or anywhere —
-   `run` stages it in) that performs ONE coherent step. Keep steps small so you
-   can verify each one.
+1. `$DUID shot state.png` then **Read** `$DRIVE_UI_IN_DOCKER_WORK/state.png`. Identify the pixel coordinates of the element you need to interact with. The display size is fixed and known (whatever you passed to `up`, default 1280×800), so image coordinates map 1:1 to suchibot coordinates.
+2. Write a small suchibot script into the work dir (or anywhere - `run` stages it in) that performs ONE coherent step. Keep steps small so you can verify each one.
 3. `$DUID run <script.js>`.
-4. `$DUID shot result.png`, Read it, confirm the UI changed as expected.
-   If not, adjust coordinates/timing and retry — do not guess blindly.
+4. `$DUID shot result.png`, Read it, confirm the UI changed as expected. If not, adjust coordinates/timing and retry - do not guess blindly.
 
-Prefer `sleep.sync(ms)` between actions inside a script so the UI can settle,
-and take a fresh screenshot whenever the layout may have changed (coordinates
-from a stale screenshot are the most common failure).
+Prefer `sleep.sync(ms)` between actions inside a script so the UI can settle, and take a fresh screenshot whenever the layout may have changed (coordinates from a stale screenshot are the most common failure).
 
 ## suchibot cheatsheet
 
-Scripts use suchibot's API via `require("suchibot")` and are run with `node`.
-Use `sleep.sync` (not `sleep.async`) to pace actions between steps. A script that
-registers `on*` event handlers must call `suchibot.startListening()` to receive
-them and `suchibot.stopListening()` when finished. Reference:
-https://github.com/suchipi/suchibot
+Scripts use suchibot's API via `require("suchibot")` and are run with `node`. Use `sleep.sync` (not `sleep.async`) to pace actions between steps. A script that registers `on*` event handlers must call `suchibot.startListening()` to receive them and `suchibot.stopListening()` when finished. Reference: https://github.com/suchipi/suchibot
 
 ```js
 const { Mouse, Keyboard, Key, MouseButton, Screen, sleep } = require("suchibot");
@@ -114,10 +88,9 @@ Screen.getSize();              // -> {width, height}
 sleep.sync(200);               // blocking pause (use between actions)
 ```
 
-**`Key` names** — the complete enum. Modifiers are side-specific (`LEFT_CONTROL`,
-not `CONTROL`); `ANY` is for `on*` listeners only.
+**`Key` names** - the complete enum. Modifiers are side-specific (`LEFT_CONTROL`, not `CONTROL`); `ANY` is for `on*` listeners only.
 
-<!-- KEY-LIST-START — skill-tests/08 verifies every installed Key appears below -->
+<!-- KEY-LIST-START - skill-tests/08 verifies every installed Key appears below -->
 ```
 BACKSPACE DELETE ENTER TAB ESCAPE SPACE INSERT
 UP DOWN LEFT RIGHT HOME END PAGE_UP PAGE_DOWN
@@ -134,21 +107,13 @@ ANY
 ```
 <!-- KEY-LIST-END -->
 
-`MouseButton`: `LEFT RIGHT MIDDLE MOUSE4 MOUSE5 ANY`. Dump the enum from a running
-container: `$DUID exec node -e 'console.log(Object.keys(require("suchibot").Key).join(" "))'`.
-See `examples/example.suchibot.js`.
+`MouseButton`: `LEFT RIGHT MIDDLE MOUSE4 MOUSE5 ANY`. Dump the enum from a running container: `$DUID exec node -e 'console.log(Object.keys(require("suchibot").Key).join(" "))'`. See `examples/example.suchibot.js`.
 
 ## Capturing the screen
 
-- **`$DUID shot [name.png]`** — default. ffmpeg `x11grab` of `:0`, includes
-  the cursor. Auto-detects the display geometry. Prints the host path.
-- **`$DUID vncshot [name.jpg]`** — alternative via `vncsnapshot` over VNC
-  (:5900). Useful if x11grab misbehaves.
-- **`$DUID record-start [name.flv]` / `record-stop`** — record a video of a
-  whole interaction (e.g. to show the user a demo). The `.flv` is a valid,
-  streamable video while it's being written, so you (or the user) can watch it
-  live as it grows — e.g. `ffplay $DRIVE_UI_IN_DOCKER_WORK/rec.flv`. `record-stop`
-  just stops the recorder; the file is already complete.
+- **`$DUID shot [name.png]`** - default. ffmpeg `x11grab` of `:0`, includes the cursor. Auto-detects the display geometry. Prints the host path.
+- **`$DUID vncshot [name.jpg]`** - alternative via `vncsnapshot` over VNC (:5900). Useful if x11grab misbehaves.
+- **`$DUID record-start [name.flv]` / `record-stop`** - record a video of a whole interaction (e.g. to show the user a demo). The `.flv` is a valid, streamable video while it's being written, so you (or the user) can watch it live as it grows - e.g. `ffplay $DRIVE_UI_IN_DOCKER_WORK/rec.flv`. `record-stop` just stops the recorder; the file is already complete.
 
 Read the resulting file from the work dir to analyze it.
 
@@ -169,31 +134,14 @@ Read the resulting file from the work dir to analyze it.
 | `down` | Stop the container, preserving it (fast resume with `up`) |
 | `destroy` | Remove the container entirely (cleanup when done with the skill) |
 
-Env overrides: `DRIVE_UI_IN_DOCKER_NAME` (container), `DRIVE_UI_IN_DOCKER_IMAGE`,
-`DRIVE_UI_IN_DOCKER_WORK` (host work dir; see **Choosing the work dir** - left unset
-it falls back to `/tmp/drive-ui-in-docker`).
+Env overrides: `DRIVE_UI_IN_DOCKER_NAME` (container), `DRIVE_UI_IN_DOCKER_IMAGE`, `DRIVE_UI_IN_DOCKER_WORK` (host work dir; see **Choosing the work dir** - left unset it falls back to `/tmp/drive-ui-in-docker`).
 
 ## Notes & troubleshooting
 
-- **Lifecycle — prefer `down`, not `destroy`**: `down` *stops* the container but
-  keeps it, so anything installed at runtime (e.g. `exec apt-get install -y
-  chromium`) survives and `up` resumes it in seconds. Only `destroy` deletes the
-  container and that state — use it when you're done with the skill for a while,
-  not between routine uses.
-- **Coordinates** are in display pixels, origin top-left, matching your
-  screenshots 1:1. Re-screenshot after any layout change.
-- **App won't appear**: some apps need env or a bigger `--shm-size` (Chromium/
-  Electron). `up` sets `--shm-size=512m`; raise it in `scripts/drive-ui-in-docker`
-  if a browser crashes. Check `$DUID exec <app>` output (run non-detached) for errors.
-- **Script hangs**: `run` uses `node` (library mode), so pure-action scripts exit
-  on their own. A script only stays alive if it calls `suchibot.startListening()`
-  (needed for `on*` handlers) — call `suchibot.stopListening()` to let it exit.
-  The `suchibot` CLI (`exec suchibot ...`) always starts listening and won't exit,
-  so prefer `run`.
-- **Watch live**: open http://localhost:8080/ in a browser to see (and even
-  take over) the desktop while automating.
-- **Resolution**: `up WxH` sets it. To change it later, `down` then `up WxH` —
-  the container (and everything installed in it) is preserved and the new size is
-  applied live via `xrandr` on resume. Any WxH works, not just common presets.
-- **Persisting an app**: for a repeatable target, create a Dockerfile with
-  `FROM drive-ui-in-docker:latest`, install the app, and set `DRIVE_UI_IN_DOCKER_IMAGE` to your tag.
+- **Lifecycle - prefer `down`, not `destroy`**: `down` *stops* the container but keeps it, so anything installed at runtime (e.g. `exec apt-get install -y chromium`) survives and `up` resumes it in seconds. Only `destroy` deletes the container and that state - use it when you're done with the skill for a while, not between routine uses.
+- **Coordinates** are in display pixels, origin top-left, matching your screenshots 1:1. Re-screenshot after any layout change.
+- **App won't appear**: some apps need env or a bigger `--shm-size` (Chromium/ Electron). `up` sets `--shm-size=512m`; raise it in `scripts/drive-ui-in-docker` if a browser crashes. Check `$DUID exec <app>` output (run non-detached) for errors.
+- **Script hangs**: `run` uses `node` (library mode), so pure-action scripts exit on their own. A script only stays alive if it calls `suchibot.startListening()` (needed for `on*` handlers) - call `suchibot.stopListening()` to let it exit. The `suchibot` CLI (`exec suchibot ...`) always starts listening and won't exit, so prefer `run`.
+- **Watch live**: open http://localhost:8080/ in a browser to see (and even take over) the desktop while automating.
+- **Resolution**: `up WxH` sets it. To change it later, `down` then `up WxH` - the container (and everything installed in it) is preserved and the new size is applied live via `xrandr` on resume. Any WxH works, not just common presets.
+- **Persisting an app**: for a repeatable target, create a Dockerfile with `FROM drive-ui-in-docker:latest`, install the app, and set `DRIVE_UI_IN_DOCKER_IMAGE` to your tag.

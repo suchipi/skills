@@ -1,7 +1,6 @@
 # Test 05 - Screen recording
 
-**Validates:** `record-start` records the active page in a process that outlives the
-CLI, and `record-stop` finalizes a playable video.
+**Validates:** `record-start` records the active page in a process that outlives the CLI, and `record-stop` finalizes a playable video.
 
 **Prereqs:** [00-setup](00-setup.md), `ffmpeg` and `ffprobe` on PATH.
 
@@ -29,24 +28,19 @@ sleep 3                      # the recorder finalizes the file as it exits
     -show_entries stream=codec_name,width,height,nb_read_frames \
     -of default=nw=1 .tmp/drive-browser-05/05-demo.webm
   ```
-  Expect `codec_name=vp9`, `width=1024`, `height=768`, and `nb_read_frames` well above
-  zero (dozens of frames for a ~4s capture).
+  Expect `codec_name=vp9`, `width=1024`, `height=768`, and `nb_read_frames` well above zero (dozens of frames for a ~4s capture).
   ```sh
   test -f .tmp/drive-browser-05/recorder.pid && echo "BUG: pid file left behind"
   ```
   Should print nothing.
 - Guards:
-  - running `record-start` twice without a `record-stop` must fail with
-    `already recording`.
-  - with ffmpeg hidden, `record-start` must fail immediately (exit 1) instead of
-    reporting success and dying in the background:
+  - running `record-start` twice without a `record-stop` must fail with `already recording`.
+  - with ffmpeg hidden, `record-start` must fail immediately (exit 1) instead of reporting success and dying in the background:
     ```sh
     env PATH="$(dirname "$(which node)"):/usr/bin:/bin" $DB record-start x.webm; echo "exit=$?"
     ```
-    Expect `drive-browser: ffmpeg is not on PATH, ...`, `exit=1`, and no `x.webm` in
-    the work dir.
-- Visual (optional): play the file (`ffplay .tmp/drive-browser-05/05-demo.webm`) and
-  confirm the text appears in the input and the greeting shows up.
+    Expect `drive-browser: ffmpeg is not on PATH, ...`, `exit=1`, and no `x.webm` in the work dir.
+- Visual (optional): play the file (`ffplay .tmp/drive-browser-05/05-demo.webm`) and confirm the text appears in the input and the greeting shows up.
 
 ## Cleanup
 

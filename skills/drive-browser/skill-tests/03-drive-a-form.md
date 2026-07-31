@@ -1,7 +1,6 @@
 # Test 03 - Drive a form
 
-**Validates:** `type` (with replace), `click`, `wait`, `press`, and `scroll` actually
-change page state, and observation confirms it.
+**Validates:** `type` (with replace), `click`, `wait`, `press`, and `scroll` actually change page state, and observation confirms it.
 
 **Prereqs:** [00-setup](00-setup.md).
 
@@ -37,13 +36,10 @@ $DB screenshot 03-element.png --selector '#out'
   - `text '#out'` prints `Hello, Lily!`.
   - `wait '#later'` prints `#later visible` (it must not time out).
   - `eval 'Math.round(window.scrollY)'` prints a number > 1000.
-  - After `press Home`, `window.scrollY` is `0`. (Asserting `wait '#greet'` instead
-    would pass either way: puppeteer's `visible` means "has a box", not "in view".)
+  - After `press Home`, `window.scrollY` is `0`. (Asserting `wait '#greet'` instead would pass either way: puppeteer's `visible` means "has a box", not "in view".)
   - `type --append` leaves `Lily Skye`, so it added to the value instead of replacing it.
-  - `screenshot --selector '#out'` writes a PNG much smaller than the viewport
-    (`file .tmp/drive-browser-03/03-element.png` -> a few hundred px wide).
-- Visual: **Read** `.tmp/drive-browser-03/03-after.png` - the input contains `Lily`
-  and the bold text `Hello, Lily!` is below it.
+  - `screenshot --selector '#out'` writes a PNG much smaller than the viewport (`file .tmp/drive-browser-03/03-element.png` -> a few hundred px wide).
+- Visual: **Read** `.tmp/drive-browser-03/03-after.png` - the input contains `Lily` and the bold text `Hello, Lily!` is below it.
 
 ## Cleanup
 

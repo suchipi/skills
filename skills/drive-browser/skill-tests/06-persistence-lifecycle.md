@@ -1,8 +1,6 @@
 # Test 06 - Persistence lifecycle
 
-**Validates:** `down` closes the browser but preserves the profile (so cookies /
-localStorage survive a restart), while `destroy` deletes it. Also checks the guards:
-commands fail cleanly with no browser, and `up` refuses to start a second one.
+**Validates:** `down` closes the browser but preserves the profile (so cookies / localStorage survive a restart), while `destroy` deletes it. Also checks the guards: commands fail cleanly with no browser, and `up` refuses to start a second one.
 
 **Prereqs:** [00-setup](00-setup.md).
 
@@ -38,16 +36,12 @@ $DB destroy --force                            # expect: removes it
 
 - Deterministic:
   - The second `up` prints `drive-browser: a browser is already running (use 'down' to close it)`.
-  - `screenshot` with nothing running prints `drive-browser: no browser is running. Run: drive-browser up`
-    and `exit=1`.
+  - `screenshot` with nothing running prints `drive-browser: no browser is running. Run: drive-browser up` and `exit=1`.
   - After the restart, `eval` prints `yes`.
   - `destroy` prints the removed-profile line; the `test -d` line prints nothing.
   - After `destroy`, `eval` prints `null`.
-  - `destroy` on the outside profile refuses with `refusing to delete ...` and `exit=1`,
-    the directory is still there, and `destroy --force` then removes it. This is the
-    guard against deleting a real browser profile someone pointed `--profile` at.
-  - The second `up` after `destroy` did **not** reinstall puppeteer (no npm output) -
-    only the profile was removed, not the work dir's `node_modules`.
+  - `destroy` on the outside profile refuses with `refusing to delete ...` and `exit=1`, the directory is still there, and `destroy --force` then removes it. This is the guard against deleting a real browser profile someone pointed `--profile` at.
+  - The second `up` after `destroy` did **not** reinstall puppeteer (no npm output) - only the profile was removed, not the work dir's `node_modules`.
 
 ## Cleanup
 

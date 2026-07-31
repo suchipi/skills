@@ -1,11 +1,8 @@
-# Test 06 — Persistent lifecycle: down preserves, destroy removes
+# Test 06 - Persistent lifecycle: down preserves, destroy removes
 
-**Validates:** `down` *stops* the container (state preserved), `up` *resumes* it,
-and only `destroy` deletes it. This is what lets a user install an app once (e.g.
-a browser) and reuse it across sessions without reinstalling.
+**Validates:** `down` *stops* the container (state preserved), `up` *resumes* it, and only `destroy` deletes it. This is what lets a user install an app once (e.g. a browser) and reuse it across sessions without reinstalling.
 
-**Prereqs:** [00-build-image](00-build-image.md). Start from a clean slate
-(`$D destroy` first if a container already exists).
+**Prereqs:** [00-build-image](00-build-image.md). Start from a clean slate (`$D destroy` first if a container already exists).
 
 ## Steps
 
@@ -19,7 +16,7 @@ $D up 1024x768
 $D exec sh -c 'echo appdata > /persist-marker'   # simulate an installed app / state
 
 $D down                                      # STOP (must preserve)
-$D status                                    # expect: stopped — 'up' to resume
+$D status                                    # expect: stopped - 'up' to resume
 docker ps -a --filter name=^drive-ui-in-docker$ --format '{{.Status}}'   # expect: Exited (...)
 
 $D up                                        # RESUME (no WxH)
@@ -33,8 +30,7 @@ echo "after destroy+fresh: $($D exec cat /persist-marker 2>/dev/null || echo ABS
 
 ## Verify (deterministic)
 
-- After `down`: `status` shows **stopped**; `docker ps -a` shows **Exited**, not
-  gone.
+- After `down`: `status` shows **stopped**; `docker ps -a` shows **Exited**, not gone.
 - After `up` resume: marker prints **`appdata`** (state survived stop/start).
 - After `destroy`: `status` shows **not created**.
 - After destroy + fresh `up`: marker is **`ABSENT`** (destroy cleared the state).

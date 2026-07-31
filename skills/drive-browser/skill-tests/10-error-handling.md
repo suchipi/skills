@@ -1,8 +1,6 @@
 # Test 10 - Error handling and survival
 
-**Validates:** bad input is reported as a plain message and never takes the browser
-down with it. The daemon holds the only browser connection, so anything that can kill
-it costs the user their session - these are the cases that used to.
+**Validates:** bad input is reported as a plain message and never takes the browser down with it. The daemon holds the only browser connection, so anything that can kill it costs the user their session - these are the cases that used to.
 
 **Prereqs:** [00-setup](00-setup.md).
 
@@ -54,8 +52,7 @@ $DB eval '1 + 1'
 
 ## Verify
 
-- Every numbered case prints one `drive-browser: ...` line - no stack trace - and
-  `exit=1`:
+- Every numbered case prints one `drive-browser: ...` line - no stack trace - and `exit=1`:
   - `unknown option --fullpage (accepts --full, --selector)`
   - `--selector needs a value`
   - `'../../escaped.png' would write outside the work dir (...)`
@@ -63,15 +60,10 @@ $DB eval '1 + 1'
   - `boom from a script` (a script's own error keeps its stack: it is your code)
   - `/tmp/db-nofn.mts must 'module.exports = async ({ page, browser }) => { ... }'`
   - `no such script: /tmp/does-not-exist.mts`
-  - `--size must look like 1280x800`, `--browser must be chrome or firefox`,
-    `--channel must be one of chrome, chrome-beta, chrome-canary, chrome-dev`,
-    `recordings must end in .webm, .mp4 or .gif`
-- Case 6 exits 124 (killed by `timeout`), case 7 answers
-  `daemon received a malformed request`.
-- **`daemon survived everything`**, and `eval '1 + 1'` still prints `2`. A failure here
-  is the important one: a bad flag or a dropped client must never cost a session.
-- The three `up` failures leave the *original* browser running - they are rejected
-  before anything is spawned.
+  - `--size must look like 1280x800`, `--browser must be chrome or firefox`, `--channel must be one of chrome, chrome-beta, chrome-canary, chrome-dev`, `recordings must end in .webm, .mp4 or .gif`
+- Case 6 exits 124 (killed by `timeout`), case 7 answers `daemon received a malformed request`.
+- **`daemon survived everything`**, and `eval '1 + 1'` still prints `2`. A failure here is the important one: a bad flag or a dropped client must never cost a session.
+- The three `up` failures leave the *original* browser running - they are rejected before anything is spawned.
 
 ## Cleanup
 

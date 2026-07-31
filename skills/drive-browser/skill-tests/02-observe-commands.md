@@ -22,16 +22,13 @@ $DB eval '({ buttons: document.querySelectorAll("button").length })'
 ## Verify
 
 - Deterministic:
-  - `elements` lists `#name`, `#greet`, `#link`, `#boom`, `#alert`, `#popup` - each on
-    its own line as a usable CSS selector, with text and an `@x,y,w,h` box. The hidden
-    `#later` div is not interactive and must not appear.
+  - `elements` lists `#name`, `#greet`, `#link`, `#boom`, `#alert`, `#popup` - each on its own line as a usable CSS selector, with text and an `@x,y,w,h` box. The hidden `#later` div is not interactive and must not appear.
   - `elements 'button'` lists only the four buttons.
   - `text h1` prints exactly `Test Page`.
   - `html '#out'` prints `<div id="out"></div>`.
   - `eval 'document.title'` prints `drive-browser test page`.
   - The last `eval` prints JSON `{ "buttons": 4 }`.
-- Sanity: paste one of the selectors from `elements` into `$DB click <selector>` and it
-  should succeed (it is a real selector, not a description).
+- Sanity: paste one of the selectors from `elements` into `$DB click <selector>` and it should succeed (it is a real selector, not a description).
 
 ## Cleanup
 

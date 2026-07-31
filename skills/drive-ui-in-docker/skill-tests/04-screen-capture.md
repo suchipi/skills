@@ -1,8 +1,6 @@
-# Test 04 — Screen capture paths
+# Test 04 - Screen capture paths
 
-**Validates:** both capture commands produce valid images: `shot` (ffmpeg
-`x11grab`, PNG, auto-detected geometry) and `vncshot` (vncsnapshot over VNC :5900,
-JPEG — forces the `hextile` encoding and bounds itself with `timeout`).
+**Validates:** both capture commands produce valid images: `shot` (ffmpeg `x11grab`, PNG, auto-detected geometry) and `vncshot` (vncsnapshot over VNC :5900, JPEG - forces the `hextile` encoding and bounds itself with `timeout`).
 
 **Prereqs:** [00-build-image](00-build-image.md).
 
@@ -28,9 +26,7 @@ file .tmp/drive-ui-in-docker/04-shot.png       # -> PNG image data, 1024 x 768
 file .tmp/drive-ui-in-docker/04-vncshot.jpg    # -> JPEG image data, 1024x768
 ```
 
-Both must be valid images at 1024x768. Optionally **Read** either and confirm the
-xterm window is visible. `vncshot` returning within its 15s bound (not hanging) is
-itself part of the check.
+Both must be valid images at 1024x768. Optionally **Read** either and confirm the xterm window is visible. `vncshot` returning within its 15s bound (not hanging) is itself part of the check.
 
 ## Cleanup
 

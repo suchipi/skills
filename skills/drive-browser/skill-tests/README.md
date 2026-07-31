@@ -1,34 +1,21 @@
 # Skill regression tests (manual)
 
-Hand-runnable regression tests for the `drive-browser` skill - **not** an automated
-suite. Each `NN-*.md` is one test case: a short list of commands to run and what to
-verify. Shared fixtures live in `fixtures/`, reusable scripts in `scripts/`.
+Hand-runnable regression tests for the `drive-browser` skill - **not** an automated suite. Each `NN-*.md` is one test case: a short list of commands to run and what to verify. Shared fixtures live in `fixtures/`, reusable scripts in `scripts/`.
 
 ## Why manual
 
-Some of what this skill does can only be judged by *looking* at a screenshot (did the
-page render? did the click land?). So verification is a mix of:
+Some of what this skill does can only be judged by *looking* at a screenshot (did the page render? did the click land?). So verification is a mix of:
 
-- **deterministic** checks - exact command output, exit codes, or file properties;
-  the test states the expected result.
-- **visual** checks - "Read `.tmp/drive-browser-NN/<file>.png` and confirm X".
-  A human, or an agent via the Read tool, eyeballs the image.
+- **deterministic** checks - exact command output, exit codes, or file properties; the test states the expected result.
+- **visual** checks - "Read `.tmp/drive-browser-NN/<file>.png` and confirm X". A human, or an agent via the Read tool, eyeballs the image.
 
 ## Running
 
-- Run every command from the **repo root**. Each block defines `DB=` for the CLI and
-  `PAGE=` for the fixture URL.
+- Run every command from the **repo root**. Each block defines `DB=` for the CLI and `PAGE=` for the fixture URL.
 - Node >= 22.12 must be on PATH; test 05 also needs `ffmpeg`.
-- Each test uses its **own** work dir (`.tmp/drive-browser-NN`) via the
-  `DRIVE_BROWSER_WORK` prelude at the top of its block, so **all tests can run in
-  parallel** - one per shell/agent. They each get their own browser, profile, and
-  screenshots. Run **[00-setup.md](00-setup.md) first**; it warms puppeteer's shared
-  browser download cache (`~/.cache/puppeteer`) so the rest only install the npm
-  package.
-- Tests 01-07 run headless (the default). [08](08-tabs-and-headful.md) passes
-  `--headful`, so it opens a real window on your screen.
-- Each test ends with a **Cleanup** block. After finishing everything, remove the
-  leftovers (this also serves as a hard reset at any point):
+- Each test uses its **own** work dir (`.tmp/drive-browser-NN`) via the `DRIVE_BROWSER_WORK` prelude at the top of its block, so **all tests can run in parallel** - one per shell/agent. They each get their own browser, profile, and screenshots. Run **[00-setup.md](00-setup.md) first**; it warms puppeteer's shared browser download cache (`~/.cache/puppeteer`) so the rest only install the npm package.
+- Tests 01-07 run headless (the default). [08](08-tabs-and-headful.md) passes `--headful`, so it opens a real window on your screen.
+- Each test ends with a **Cleanup** block. After finishing everything, remove the leftovers (this also serves as a hard reset at any point):
   ```sh
   for n in 00 01 02 03 04 05 06 07 08 09 10; do
     DRIVE_BROWSER_WORK=.tmp/drive-browser-$n \

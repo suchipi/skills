@@ -1,12 +1,8 @@
 # Test 09 - Firefox
 
-**Validates:** `up --browser firefox` drives Firefox through puppeteer's WebDriver BiDi
-support, with the same commands and the same console capture as Chrome, and that the
-two documented differences behave as documented: no video recording, and `--channel`
-being rejected.
+**Validates:** `up --browser firefox` drives Firefox through puppeteer's WebDriver BiDi support, with the same commands and the same console capture as Chrome, and that the two documented differences behave as documented: no video recording, and `--channel` being rejected.
 
-**Prereqs:** [00-setup](00-setup.md). The first run downloads a Firefox build into
-`~/.cache/puppeteer` (~100 MB), so allow a few minutes.
+**Prereqs:** [00-setup](00-setup.md). The first run downloads a Firefox build into `~/.cache/puppeteer` (~100 MB), so allow a few minutes.
 
 ## Steps
 
@@ -36,23 +32,17 @@ $DB up --browser firefox --channel chrome; echo "channel-exit=$?"
 
 - Deterministic:
   - `status` prints `browser:  firefox running (headless 1024x768 ...)`.
-  - `elements` lists the same selectors as [02](02-observe-commands.md) (boxes differ
-    slightly - Firefox lays the widgets out a few pixels wider).
+  - `elements` lists the same selectors as [02](02-observe-commands.md) (boxes differ slightly - Firefox lays the widgets out a few pixels wider).
   - `text '#out'` prints `Hello, Firefox!`, and `wait '#later'` succeeds.
   - `eval 'navigator.userAgent'` contains `Firefox/`.
-  - `console --tail 4` shows `console/log: page loaded`, `console/warn: greeted`,
-    `pageerror: Error: kaboom` and `dialog/alert: hi there` - console capture works the
-    same as in Chrome, and `eval '1 + 1'` printing `2` proves the dialog did not block.
+  - `console --tail 4` shows `console/log: page loaded`, `console/warn: greeted`, `pageerror: Error: kaboom` and `dialog/alert: hi there` - console capture works the same as in Chrome, and `eval '1 + 1'` printing `2` proves the dialog did not block.
   - `run` prints the example script's JSON with `"heading": "Test Page"`.
-  - `record-start` fails with `recording uses puppeteer's screencast, which needs CDP`
-    and `record-exit=1`.
-  - `up --browser firefox --channel chrome` fails with the `--channel` message and
-    `channel-exit=1`.
+  - `record-start` fails with `recording uses puppeteer's screencast, which needs CDP` and `record-exit=1`.
+  - `up --browser firefox --channel chrome` fails with the `--channel` message and `channel-exit=1`.
   ```sh
   file .tmp/drive-browser-09/09-firefox.png   # -> PNG image data, 1024 x 768
   ```
-- Visual: **Read** `.tmp/drive-browser-09/09-firefox.png` - the test page rendered by
-  Firefox, showing `Hello, Firefox!`.
+- Visual: **Read** `.tmp/drive-browser-09/09-firefox.png` - the test page rendered by Firefox, showing `Hello, Firefox!`.
 
 ## Cleanup
 

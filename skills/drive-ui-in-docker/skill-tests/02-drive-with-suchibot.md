@@ -1,12 +1,8 @@
-# Test 02 — Drive mouse/keyboard with suchibot
+# Test 02 - Drive mouse/keyboard with suchibot
 
-**Validates:** `run` executes a suchibot script that moves the mouse, clicks, and
-types into a real app — and that it **exits on its own** (suchibot used as a Node
-library; the old `process.exit(0)` workaround is gone). A hang here is a
-regression.
+**Validates:** `run` executes a suchibot script that moves the mouse, clicks, and types into a real app - and that it **exits on its own** (suchibot used as a Node library; the old `process.exit(0)` workaround is gone). A hang here is a regression.
 
-**Prereqs:** [00-build-image](00-build-image.md). Uses
-[scripts/type-marker.js](scripts/type-marker.js).
+**Prereqs:** [00-build-image](00-build-image.md). Uses [scripts/type-marker.js](scripts/type-marker.js).
 
 ## Steps
 
@@ -20,7 +16,7 @@ for i in $(seq 1 20); do $D exec xdpyinfo -display :0 >/dev/null 2>&1 && break; 
 $D launch xterm -geometry 100x30+50+50
 sleep 3
 
-# Time it and cap it — must finish in a couple of seconds, not time out.
+# Time it and cap it - must finish in a couple of seconds, not time out.
 start=$(date +%s)
 timeout 25 $D run skills/drive-ui-in-docker/skill-tests/scripts/type-marker.js
 echo "run exit=$?  elapsed=$(( $(date +%s) - start ))s"
@@ -29,10 +25,8 @@ $D shot 02-after.png
 
 ## Verify
 
-- Deterministic: `run exit=0` and `elapsed` is a few seconds (**not** ~25 — that
-  would mean `timeout` killed a hung process → regression).
-- Visual: **Read** `.tmp/drive-ui-in-docker/02-after.png` — expect the terminal to
-  show the typed command and its output line **`SKILLTEST_DRIVE_OK`**.
+- Deterministic: `run exit=0` and `elapsed` is a few seconds (**not** ~25 - that would mean `timeout` killed a hung process → regression).
+- Visual: **Read** `.tmp/drive-ui-in-docker/02-after.png` - expect the terminal to show the typed command and its output line **`SKILLTEST_DRIVE_OK`**.
 
 ## Cleanup
 

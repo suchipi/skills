@@ -1,7 +1,6 @@
-# Test 01 — Basic lifecycle and screenshot
+# Test 01 - Basic lifecycle and screenshot
 
-**Validates:** `up` starts the VNC desktop, `launch` runs an app inside it,
-`shot` captures the screen to a PNG on the host, and `down` stops it.
+**Validates:** `up` starts the VNC desktop, `launch` runs an app inside it, `shot` captures the screen to a PNG on the host, and `down` stops it.
 
 **Prereqs:** [00-build-image](00-build-image.md).
 
@@ -27,8 +26,7 @@ $D status
   file .tmp/drive-ui-in-docker/01-shot.png     # -> PNG image data, 1024 x 768
   ```
   `status` should report `running`, `display: 1024x768`, view URL.
-- Visual: **Read** `.tmp/drive-ui-in-docker/01-shot.png` — expect an **xterm
-  window** with a shell prompt (`root@…:~#`) near the top-left.
+- Visual: **Read** `.tmp/drive-ui-in-docker/01-shot.png` - expect an **xterm window** with a shell prompt (`root@…:~#`) near the top-left.
 
 ## Cleanup
 

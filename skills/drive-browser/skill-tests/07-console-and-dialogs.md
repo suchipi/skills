@@ -1,8 +1,6 @@
 # Test 07 - Console capture and dialogs
 
-**Validates:** the daemon records console messages, uncaught page errors, and failed
-requests from the moment the browser starts, and auto-dismisses dialogs so they cannot
-block later commands.
+**Validates:** the daemon records console messages, uncaught page errors, and failed requests from the moment the browser starts, and auto-dismisses dialogs so they cannot block later commands.
 
 **Prereqs:** [00-setup](00-setup.md).
 

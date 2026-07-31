@@ -1,11 +1,8 @@
 # Test 08 - Tabs and headful mode
 
-**Validates:** `pages` lists tabs, `use` switches the active one and the choice sticks
-across invocations, and `--headful` opens a real window that renders and screenshots
-correctly.
+**Validates:** `pages` lists tabs, `use` switches the active one and the choice sticks across invocations, and `--headful` opens a real window that renders and screenshots correctly.
 
-**Prereqs:** [00-setup](00-setup.md). This test **opens a browser window on your
-screen**.
+**Prereqs:** [00-setup](00-setup.md). This test **opens a browser window on your screen**.
 
 ## Steps
 
@@ -29,14 +26,10 @@ $DB screenshot 08-headful.png
 ## Verify
 
 - Deterministic:
-  - The first `pages` lists two tabs (the fixture and `about:blank`) with `*` on the
-    active one. Tab order is the browser's own, **not** creation order, so pick the
-    index by URL rather than assuming.
-  - After `use N` the `*` moves to N and stays there for the following commands:
-    `eval 'location.href'` reports that tab's URL, and `goto` navigates that tab.
+  - The first `pages` lists two tabs (the fixture and `about:blank`) with `*` on the active one. Tab order is the browser's own, **not** creation order, so pick the index by URL rather than assuming.
+  - After `use N` the `*` moves to N and stays there for the following commands: `eval 'location.href'` reports that tab's URL, and `goto` navigates that tab.
   - `text h1` on example.com prints `Example Domain`.
-  - ```sh
-    file .tmp/drive-browser-08/08-headful.png    # -> PNG image data
+  - ```sh file .tmp/drive-browser-08/08-headful.png    # -> PNG image data
     ```
     On a Retina display the pixel size is 2x the CSS viewport - that is expected and
     is why actions use selectors, not image coordinates.

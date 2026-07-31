@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# drive-ui-in-docker — build/run a docker-novnc container and drive+observe the UI inside it.
+# drive-ui-in-docker - build/run a docker-novnc container and drive+observe the UI inside it.
 #
 # All commands share one container ($NAME) and one host<->container work dir:
 #   host  $WORK   <->  container /work
@@ -25,7 +25,7 @@
 #                DRIVE_UI_IN_DOCKER_IMAGE (drive-ui-in-docker:latest),
 #                DRIVE_UI_IN_DOCKER_WORK (/tmp/drive-ui-in-docker)
 #                DRIVE_UI_IN_DOCKER_NO_PORTS (unset; if set, don't publish host
-#                  ports — lets several differently-named containers run at once)
+#                  ports - lets several differently-named containers run at once)
 set -euo pipefail
 
 NAME="${DRIVE_UI_IN_DOCKER_NAME:-drive-ui-in-docker}"
@@ -60,7 +60,7 @@ wait_x() {
 
 # Set the live display to WxH via RandR. Uses a preset mode when TigerVNC lists
 # one, otherwise synthesizes a modeline (Xvnc is virtual, so the timings are
-# cosmetic — only the WxH matters).
+# cosmetic - only the WxH matters).
 apply_geometry() {
   local geom="$1"
   local w="${geom%x*}" h="${geom#*x}"
@@ -85,22 +85,22 @@ cmd_build() {
 cmd_up() {
   running && die "container '$NAME' already running (use 'down' to stop, 'destroy' to remove)"
   # Reuse a stopped container so anything installed in it (apt packages, etc.)
-  # survives across sessions — only 'destroy' deletes that state.
+  # survives across sessions - only 'destroy' deletes that state.
   if exists; then
     docker start "$NAME" >/dev/null
     if [ -n "${1:-}" ]; then
       wait_x || die "resumed '$NAME' but the X server never came up"
       apply_geometry "$1" || die "resumed '$NAME' but failed to set resolution $1"
-      echo "Resumed existing '$NAME' at $1 — installed apps & state preserved. View: http://localhost:8080/"
+      echo "Resumed existing '$NAME' at $1 - installed apps & state preserved. View: http://localhost:8080/"
     else
-      echo "Resumed existing '$NAME' — installed apps & state preserved. View: http://localhost:8080/"
+      echo "Resumed existing '$NAME' - installed apps & state preserved. View: http://localhost:8080/"
     fi
     return
   fi
   local geom="${1:-1280x800}"
   local w="${geom%x*}" h="${geom#*x}"
   # Host ports can only be bound once, so suppress publishing (NO_PORTS) when
-  # running several containers in parallel — capture still works over the
+  # running several containers in parallel - capture still works over the
   # in-container VNC/X server, only the browser view URL goes away.
   local ports="-p 8080:8080 -p 5900:5900"
   [ -n "${DRIVE_UI_IN_DOCKER_NO_PORTS:-}" ] && ports=""
@@ -137,7 +137,7 @@ cmd_record_start() {
   local name="${1:-rec.flv}"
   local size; size="$(disp_size)"
   # FLV + low-latency H.264, flushing every packet to disk (-flush_packets 1), so
-  # the file is a valid, growing video the whole time it records — watch it live
+  # the file is a valid, growing video the whole time it records - watch it live
   # (e.g. ffplay). Without the flush, the muxer buffers and nothing hits disk
   # until the recorder stops.
   docker exec -d -e DISPLAY=:0 "$NAME" sh -c \
@@ -148,7 +148,7 @@ cmd_record_start() {
 cmd_record_stop() {
   require_up
   # The .flv is already a complete, valid video at every moment, so stopping is
-  # just terminating the recorder — there's no finalization step.
+  # just terminating the recorder - there's no finalization step.
   docker exec "$NAME" sh -c 'p="$1"; test -f "$p" && kill "$(cat "$p")" && rm -f "$p"' _ "/work/${NAME}.pid" \
     || die "no active recording"
   echo "Recording stopped."
@@ -199,7 +199,7 @@ cmd_status() {
     echo "display:   $(disp_size 2>/dev/null || echo '?')"
     echo "view:      http://localhost:8080/"
   elif exists; then
-    echo "container: $NAME (stopped — 'up' to resume)"
+    echo "container: $NAME (stopped - 'up' to resume)"
   else
     echo "container: $NAME (not created)"
   fi
@@ -210,7 +210,7 @@ cmd_status() {
 cmd_down() {
   running || { echo "not running"; return 0; }
   docker stop "$NAME" >/dev/null
-  echo "Stopped '$NAME' — state preserved. Resume with 'up'; fully remove with 'destroy'."
+  echo "Stopped '$NAME' - state preserved. Resume with 'up'; fully remove with 'destroy'."
 }
 
 cmd_destroy() {

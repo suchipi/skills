@@ -1,13 +1,8 @@
-# Test 05 — Recording is a live-watchable FLV
+# Test 05 - Recording is a live-watchable FLV
 
-**Validates:** `record-start` produces an `.flv` that is a **valid, growing video
-while still recording** (not just after stopping), and `record-stop` merely
-terminates the recorder. Two regressions this guards against: recording to a
-format that's only valid once finalized (old MP4 behavior), and output buffering
-that leaves the file empty until stop (fixed with `-flush_packets 1`).
+**Validates:** `record-start` produces an `.flv` that is a **valid, growing video while still recording** (not just after stopping), and `record-stop` merely terminates the recorder. Two regressions this guards against: recording to a format that's only valid once finalized (old MP4 behavior), and output buffering that leaves the file empty until stop (fixed with `-flush_packets 1`).
 
-**Prereqs:** [00-build-image](00-build-image.md). Uses
-[scripts/type-marker.js](scripts/type-marker.js) as on-screen activity.
+**Prereqs:** [00-build-image](00-build-image.md). Uses [scripts/type-marker.js](scripts/type-marker.js) as on-screen activity.
 
 ## Steps
 
@@ -43,11 +38,9 @@ echo "final frames:"; ffprobe -v error -count_frames -select_streams v \
 
 ## Verify
 
-- Mid-recording ffprobe prints `format_name=flv`, `codec_name=h264`, `1024x768`
-  **before** `record-stop` — proves live validity.
-- `.tmp/drive-ui-in-docker/05-midframe.png` exists and is a valid PNG (`file` it,
-  or **Read** it) — the still-growing file decodes.
-- `s2 > s1` — the file grows while recording (flushing works).
+- Mid-recording ffprobe prints `format_name=flv`, `codec_name=h264`, `1024x768` **before** `record-stop` - proves live validity.
+- `.tmp/drive-ui-in-docker/05-midframe.png` exists and is a valid PNG (`file` it, or **Read** it) - the still-growing file decodes.
+- `s2 > s1` - the file grows while recording (flushing works).
 - Final `nb_read_frames` is a positive number.
 
 ## Cleanup

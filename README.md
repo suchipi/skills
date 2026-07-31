@@ -51,7 +51,22 @@ Skills are model-invoked: once the plugin is installed, Claude automatically use
 
 ## Updating and removing
 
+Updates are not automatic by default. Claude Code auto-updates Anthropic's own marketplaces, but third-party ones like this start with auto-update disabled, so pull the latest version by hand:
+
 ```
-/plugin marketplace update suchipi-skills          # pull the latest version
-/plugin uninstall suchipi-skills@suchipi-skills     # remove the plugin
+/plugin marketplace update suchipi-skills        # refresh the catalog from GitHub
+/plugin update suchipi-skills@suchipi-skills     # update the installed plugin
+/reload-plugins                                  # activate it in this session
 ```
+
+The first line alone isn't enough: installed plugins are copied into their own cache, so refreshing the catalog doesn't move them. There is no release to wait for, though. The plugin pins no `version`, so its version is the git commit, and whatever is on `main` is what you get.
+
+To let Claude Code handle it instead, run `/plugin`, open the **Marketplaces** tab, select **suchipi-skills**, and choose **Enable auto-update**. It then refreshes in the background shortly after each session starts (with a random delay of up to ten minutes, so a running session keeps whatever it launched with), and notifies you to run `/reload-plugins` when something changed. See [Configure auto-updates](https://code.claude.com/docs/en/discover-plugins#configure-auto-updates) for the details, including how to turn auto-updates off globally.
+
+Remove the plugin with:
+
+```
+/plugin uninstall suchipi-skills@suchipi-skills
+```
+
+The non-interactive `claude plugin marketplace update`, `claude plugin update`, and `claude plugin uninstall` shell commands do the same things.

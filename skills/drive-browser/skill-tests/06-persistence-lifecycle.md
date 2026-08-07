@@ -17,6 +17,7 @@ $DB down
 $DB screenshot nope.png; echo "exit=$?"              # expect: clean error, not a stack trace
 $DB up --url "$PAGE"
 $DB eval 'localStorage.getItem("persisted")'   # expect: yes
+$DB pages                           # expect: one tab, no leftovers from the first run
 $DB destroy
 test -d .tmp/drive-browser-06/profile && echo "BUG: profile still there"
 $DB up --url "$PAGE"
@@ -38,6 +39,7 @@ $DB destroy --force                            # expect: removes it
   - The second `up` prints `drive-browser: a browser is already running (use 'down' to close it)`.
   - `screenshot` with nothing running prints `drive-browser: no browser is running. Run: drive-browser up` and `exit=1`.
   - After the restart, `eval` prints `yes`.
+  - After the restart, `pages` lists exactly **one** tab. The profile comes back, but its tabs must not: the browser restores them on launch, so leaving them would stack up another `about:blank` per `up` and make the active tab a matter of luck.
   - `destroy` prints the removed-profile line; the `test -d` line prints nothing.
   - After `destroy`, `eval` prints `null`.
   - `destroy` on the outside profile refuses with `refusing to delete ...` and `exit=1`, the directory is still there, and `destroy --force` then removes it. This is the guard against deleting a real browser profile someone pointed `--profile` at.

@@ -126,20 +126,25 @@ async function main(options: DaemonOptions): Promise<void> {
     ...(options.channel ? { channel: options.channel } : {}),
   });
 
-  for (const page of await browser.pages()) watchPage(page);
+  // The profile persists across `down`, and the browser restores its tabs from it
+  // on the next launch - so without this, every `up` would stack another run's
+  // leftovers behind the fresh tab, and `pages()[0]` could be any of them.
+  const existing = await browser.pages();
+  const page = existing[0] ?? (await browser.newPage());
+  for (const stale of existing.slice(1)) await stale.close().catch(() => {});
+
+  for (const tab of await browser.pages()) watchPage(tab);
   browser.on("targetcreated", async (target: Target) => {
-    const page = await target.page().catch(() => null);
-    if (page) watchPage(page);
+    const created = await target.page().catch(() => null);
+    if (created) watchPage(created);
   });
 
-  const page = (await browser.pages())[0] || (await browser.newPage());
   // Firefox ignores the launch viewport, so set it explicitly.
   if (firefox) await page.setViewport({ width, height }).catch(() => {});
-  if (options.url) {
-    await page
-      .goto(options.url, { waitUntil: "domcontentloaded" })
-      .catch((error: unknown) => logEvent({ kind: "error", text: String(error) }));
-  }
+  // The surviving tab may itself be a restored one, so land it somewhere known.
+  await page
+    .goto(options.url ?? "about:blank", { waitUntil: "domcontentloaded" })
+    .catch((error: unknown) => logEvent({ kind: "error", text: String(error) }));
 
   let closing = false;
 

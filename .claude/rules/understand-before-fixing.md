@@ -1,8 +1,3 @@
----
-globs:
-  - "**/*"
----
-
 # Understand Before Fixing
 
 When debugging issues, **DO NOT stab in the dark with random changes**.

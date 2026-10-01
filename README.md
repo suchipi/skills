@@ -18,6 +18,12 @@ Drive and observe a real web browser on the host, no Docker involved. A detached
 
 Requires **Node >= 22.12** on the machine running Claude Code (plus `ffmpeg` if you want video recording). The browser itself is downloaded by puppeteer on first use. The CLI is TypeScript run directly by Node's built-in type stripping, so there is no build step.
 
+### `eval-and-hillclimb`
+
+Build an eval for Claude Code instructions (a skill, rule, or `CLAUDE.md`) and then hillclimb them against it, following [Automating eval design and hillclimbing](https://claude.dev/blog/automating-eval-design-and-hillclimbing/). It runs the built-in `/claude-api build-eval` and `/claude-api hillclimb` commands, with paired `claude -p` trials (with and without the instruction) as the app under test.
+
+Every trial and judge call is a real model call that counts against your plan's usage limits or your API bill.
+
 ## Installation
 
 Run these inside Claude Code:

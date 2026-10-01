@@ -9,7 +9,7 @@
     {
       "name": "suchipi-skills",
       "source": ".",
-      "description": "suchipi's Claude Code skills. Provides drive-ui-in-docker (drive arbitrary GUI apps in Docker via noVNC + suchibot) and drive-browser (drive a real web browser on the host via node + puppeteer)."
+      "description": "suchipi's Claude Code skills. Provides drive-ui-in-docker (drive arbitrary GUI apps in Docker via noVNC + suchibot) and drive-browser (drive a real web browser on the host via node + puppeteer), and eval-and-hillclimb (build evals for skills, rules, and CLAUDE.md, and hillclimb against them)."
     }
   ]
 }

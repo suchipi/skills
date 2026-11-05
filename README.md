@@ -24,6 +24,12 @@ Build an eval for Claude Code instructions (a skill, rule, or `CLAUDE.md`) and t
 
 Every trial and judge call is a real model call that counts against your plan's usage limits or your API bill.
 
+### `comment-on-markdown`
+
+Leave review comments on a Markdown file in your browser, then have Claude address them. Run `/suchipi-skills:comment-on-markdown path/to/file.md` and Claude starts [markdown-commenter](https://github.com/suchipi/markdown-commenter) on that file and opens it in your browser, where you can highlight text or click on images to comment. When you tell Claude you're done, it stops the server, reads your comments, and works through them. Each run saves its comments to a new file in the project's gitignored scratch dir (or `/tmp` when there isn't one), and Claude never deletes them.
+
+This skill only runs when you invoke it, so Claude won't start it on its own. Requires **Node >= 20.11**, git, and npm. markdown-commenter is cloned from GitHub on first use.
+
 ## Installation
 
 Run these inside Claude Code:
@@ -49,7 +55,7 @@ claude plugin install suchipi-skills@suchipi-skills
 
 ## Usage
 
-Skills are model-invoked: once the plugin is installed, Claude automatically uses a skill when your request matches its description (e.g. "automate this app running in Docker"). You can also invoke one explicitly by its namespaced name:
+Skills are model-invoked, except for `comment-on-markdown`: once the plugin is installed, Claude automatically uses a skill when your request matches its description (e.g. "automate this app running in Docker"). You can also invoke one explicitly by its namespaced name:
 
 ```
 /suchipi-skills:drive-ui-in-docker
